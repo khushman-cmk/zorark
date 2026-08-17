@@ -1,69 +1,104 @@
-import Image from "next/image";
+import Link from "next/link";
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#e0428d] px-4 py-10">
+      <div className="pointer-events-none absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-[#f86bb4]/50 blur-3xl" />
+      <div className="pointer-events-none absolute -top-20 right-0 h-72 w-72 rounded-full bg-[#c01968]/35 blur-3xl" />
+
+      <section className="relative w-full max-w-[420px]">
+        <div className="relative mx-auto h-[760px] w-[366px] rounded-[50px] border-[9px] border-[#29262f] bg-[#1f1d24] p-2.5 shadow-[0_28px_75px_rgba(15,10,18,0.45)]">
+          <div className="relative h-full overflow-hidden rounded-[40px] bg-[#15131a]">
+            <div className="absolute left-1/2 top-2 z-30 h-6 w-40 -translate-x-1/2 rounded-b-2xl bg-[#0f0d13]" />
+
+            <div
+              className="absolute inset-x-0 top-0 h-[60%] bg-[#f283bc]"
+              style={{
+                borderBottomLeftRadius: "40% 20%",
+                borderBottomRightRadius: "60% 28%",
+              }}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+            <div
+              className="absolute bottom-[40%] left-0 h-[23%] w-full bg-[#15131a]"
+              style={{
+                borderTopLeftRadius: "56% 70%",
+                borderTopRightRadius: "44% 60%",
+              }}
+            />
+
+            <div className="relative z-10 flex h-full flex-col items-center justify-between px-8 pb-12 pt-20 text-center">
+              <div>
+                <div className="mx-auto flex h-36 w-36 items-center justify-center rounded-full bg-[#de3a8f] shadow-[inset_0_0_0_8px_rgba(143,12,72,0.36)]">
+                  <svg
+                    width="96"
+                    height="96"
+                    viewBox="0 0 92 92"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="opacity-85"
+                    aria-hidden="true"
+                  >
+                    <circle cx="46" cy="46" r="39" stroke="#9c185a" strokeWidth="7" />
+                    <path
+                      d="M18 46C31 35 45 33 74 30"
+                      stroke="#9c185a"
+                      strokeWidth="7"
+                      strokeLinecap="round"
+                    />
+                    <path
+                      d="M27 69C39 50 51 37 66 22"
+                      stroke="#9c185a"
+                      strokeWidth="7"
+                      strokeLinecap="round"
+                    />
+                    <path
+                      d="M24 26C36 40 44 53 49 74"
+                      stroke="#9c185a"
+                      strokeWidth="7"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                </div>
+                <p
+                  className="mt-4 text-[58px] leading-none text-[#c82f79]"
+                  style={{
+                    fontFamily: '"Brush Script MT", "Segoe Script", "Lucida Handwriting", cursive',
+                  }}
+                >
+                  dribbble
+                </p>
+              </div>
+
+              <div className="w-full">
+                <h1 className="text-[50px] font-extrabold leading-none tracking-tight text-white">
+                  Dribbble
+                </h1>
+                <p className="mx-auto mt-5 max-w-[285px] text-[19px] leading-8 text-zinc-300">
+                  Sign in to be inspired by the works of designers
+                  <br />
+                  or to inspire others with your design
+                </p>
+                <div className="mx-auto mt-4 h-[2px] w-16 rounded-full bg-[#f16faf]" />
+
+                <Link
+                  href="/login"
+                  className="mt-10 block rounded-full bg-[#ef6eae] px-7 py-3 text-[13px] font-extrabold tracking-wide text-white transition hover:brightness-105"
+                >
+                  CREATE ACCOUNT
+                </Link>
+
+                <Link
+                  href="/login"
+                  className="mt-4 inline-block text-sm font-bold tracking-wide text-[#f06daf] transition hover:text-[#ff91c5]"
+                >
+                  LOG IN
+                </Link>
+              </div>
+            </div>
+          </div>
         </div>
-      </main>
-    </div>
+      </section>
+    </main>
   );
 }
