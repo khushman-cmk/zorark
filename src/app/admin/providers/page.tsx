@@ -1,8 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { type ColumnDef } from "@tanstack/react-table";
-import DataTable from "../_components/DataTable";
+import DataTable, { type Column } from "../_components/DataTable";
 import ConfirmModal from "../_components/ConfirmModal";
 
 interface Provider {
@@ -38,10 +37,8 @@ export default function ProvidersPage() {
 
   function testDeepLink(p: Provider) {
     const url = p.deepLinkTemplate
-      .replace("{lat}", "28.6139")
-      .replace("{lng}", "77.2090")
-      .replace("{dest_lat}", "19.0760")
-      .replace("{dest_lng}", "72.8777");
+      .replace("{lat}", "28.6139").replace("{lng}", "77.2090")
+      .replace("{dest_lat}", "19.0760").replace("{dest_lng}", "72.8777");
     window.open(url, "_blank");
   }
 
@@ -60,11 +57,7 @@ export default function ProvidersPage() {
     const res = await fetch(url, {
       method,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...form,
-        baseFare: parseFloat(form.baseFare),
-        perKmRate: parseFloat(form.perKmRate),
-      }),
+      body: JSON.stringify({ ...form, baseFare: parseFloat(form.baseFare), perKmRate: parseFloat(form.perKmRate) }),
     });
     if (res.ok) {
       setAlert({ type: "success", msg: editTarget ? "Provider updated." : "Provider added." });
@@ -77,72 +70,53 @@ export default function ProvidersPage() {
     }
   }
 
-  const columns: ColumnDef<Provider, unknown>[] = [
-    { accessorKey: "name", header: "Provider Name", cell: (i) => <strong>{i.getValue() as string}</strong> },
-    { accessorKey: "vehicleType", header: "Vehicle Type" },
+  const columns: Column<Provider>[] = [
+    { key: "name", header: "Provider Name", cell: (p) => <strong>{p.name}</strong> },
+    { key: "vehicleType", header: "Vehicle Type" },
+    { key: "baseFare", header: "Base Fare (₹)", cell: (p) => `₹${parseFloat(p.baseFare).toFixed(2)}` },
+    { key: "perKmRate", header: "Per Km (₹)", cell: (p) => `₹${parseFloat(p.perKmRate).toFixed(2)}` },
     {
-      accessorKey: "baseFare",
-      header: "Base Fare (₹)",
-      cell: (i) => `₹${parseFloat(i.getValue() as string).toFixed(2)}`,
-    },
-    {
-      accessorKey: "perKmRate",
-      header: "Per Km (₹)",
-      cell: (i) => `₹${parseFloat(i.getValue() as string).toFixed(2)}`,
-    },
-    {
-      accessorKey: "isActive",
+      key: "isActive",
       header: "Status",
-      cell: ({ row }) => {
-        const p = row.original;
-        return (
-          <label className="toggle-switch" title={p.isActive ? "Active — click to deactivate" : "Inactive — click to activate"}>
-            <input type="checkbox" checked={p.isActive} onChange={() => toggleActive(p)} />
-            <span className="toggle-track" />
-          </label>
-        );
-      },
+      cell: (p) => (
+        <label className="toggle-switch">
+          <input type="checkbox" checked={p.isActive} onChange={() => toggleActive(p)} />
+          <span className="toggle-track" />
+        </label>
+      ),
     },
     {
-      id: "actions",
+      key: "id",
       header: "Actions",
-      cell: ({ row }) => {
-        const p = row.original;
-        return (
-          <div style={{ display: "flex", gap: "0.4rem" }}>
-            <button className="btn btn--sm btn--ghost" onClick={() => { setEditTarget(p); setForm({ name: p.name, vehicleType: p.vehicleType, baseFare: p.baseFare, perKmRate: p.perKmRate, deepLinkTemplate: p.deepLinkTemplate }); }}>
-              Edit
-            </button>
-            <button className="btn btn--sm btn--ghost" onClick={() => testDeepLink(p)} title="Test deep link with dummy Delhi→Mumbai coords">
-              🔗 Test
-            </button>
-            <button className="btn btn--sm btn--danger" onClick={() => setDeleteTarget(p)}>
-              Delete
-            </button>
-          </div>
-        );
-      },
+      cell: (p) => (
+        <div style={{ display: "flex", gap: "0.4rem" }}>
+          <button className="btn btn--sm btn--ghost" onClick={() => { setEditTarget(p); setForm({ name: p.name, vehicleType: p.vehicleType, baseFare: p.baseFare, perKmRate: p.perKmRate, deepLinkTemplate: p.deepLinkTemplate }); }}>
+            Edit
+          </button>
+          <button className="btn btn--sm btn--ghost" onClick={() => testDeepLink(p)} title="Test with Delhi→Mumbai dummy coords">
+            🔗 Test
+          </button>
+          <button className="btn btn--sm btn--danger" onClick={() => setDeleteTarget(p)}>
+            Delete
+          </button>
+        </div>
+      ),
     },
   ];
 
   const formFields = (
     <div className="form-grid" style={{ marginTop: "0.75rem" }}>
-      <div className="form-field">
-        <label className="form-label">Provider Name</label>
-        <input className="input" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder="e.g. Ola" />
-      </div>
-      <div className="form-field">
-        <label className="form-label">Vehicle Type</label>
-        <input className="input" value={form.vehicleType} onChange={(e) => setForm((f) => ({ ...f, vehicleType: e.target.value }))} placeholder="e.g. Sedan" />
-      </div>
-      <div className="form-field">
-        <label className="form-label">Base Fare (₹)</label>
-        <input className="input" type="number" step="0.01" value={form.baseFare} onChange={(e) => setForm((f) => ({ ...f, baseFare: e.target.value }))} placeholder="50.00" />
-      </div>
-      <div className="form-field">
-        <label className="form-label">Per Km Rate (₹)</label>
-        <input className="input" type="number" step="0.01" value={form.perKmRate} onChange={(e) => setForm((f) => ({ ...f, perKmRate: e.target.value }))} placeholder="12.00" />
-      </div>
+      {[
+        { key: "name", label: "Provider Name", placeholder: "e.g. Ola" },
+        { key: "vehicleType", label: "Vehicle Type", placeholder: "e.g. Sedan" },
+        { key: "baseFare", label: "Base Fare (₹)", placeholder: "50.00" },
+        { key: "perKmRate", label: "Per Km Rate (₹)", placeholder: "12.00" },
+      ].map(({ key, label, placeholder }) => (
+        <div key={key} className="form-field">
+          <label className="form-label">{label}</label>
+          <input className="input" value={form[key as keyof typeof form]} onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))} placeholder={placeholder} type={key.includes("Fare") || key.includes("Rate") ? "number" : "text"} step="0.01" />
+        </div>
+      ))}
       <div className="form-field" style={{ gridColumn: "1 / -1" }}>
         <label className="form-label">Deep Link Template</label>
         <input className="input" value={form.deepLinkTemplate} onChange={(e) => setForm((f) => ({ ...f, deepLinkTemplate: e.target.value }))} placeholder="https://provider.app/ride?lat={lat}&lng={lng}" />
@@ -170,29 +144,17 @@ export default function ProvidersPage() {
             + Add Provider
           </button>
         </div>
-        <DataTable
-          data={data}
-          columns={columns}
-          total={data.length}
-          page={1}
-          limit={data.length || 1}
-          onPageChange={() => {}}
-          isLoading={loading}
-          emptyMessage="No providers yet. Add one to get started."
-        />
+        <DataTable data={data} columns={columns} total={data.length} page={1} limit={data.length || 1} onPageChange={() => {}} isLoading={loading} emptyMessage="No providers yet." />
       </div>
 
-      {/* Add Modal */}
       <ConfirmModal open={addOpen} onOpenChange={(o) => { if (!o) { setAddOpen(false); setForm(BLANK_FORM); } }} title="Add Travel Provider" description="Fill in provider details." confirmLabel="Add" onConfirm={handleSave}>
         {formFields}
       </ConfirmModal>
 
-      {/* Edit Modal */}
       <ConfirmModal open={!!editTarget} onOpenChange={(o) => !o && setEditTarget(null)} title="Edit Provider" description="Update provider details." confirmLabel="Save" onConfirm={handleSave}>
         {formFields}
       </ConfirmModal>
 
-      {/* Delete Modal */}
       <ConfirmModal open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)} title="Delete Provider" description={`Remove ${deleteTarget?.name}?`} confirmLabel="Delete" danger onConfirm={async () => { if (deleteTarget) { await fetch(`/api/admin/providers/${deleteTarget.id}`, { method: "DELETE" }); fetchProviders(); } }} />
     </div>
   );

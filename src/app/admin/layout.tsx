@@ -2,7 +2,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
 import { redirect } from "next/navigation";
 import AdminSidebar from "./_components/AdminSidebar";
-import { SessionProvider } from "next-auth/react";
+import AdminProviders from "./_components/AdminProviders";
+import AdminHeader from "./_components/AdminHeader";
 import type { Metadata } from "next";
 import "./admin.css";
 
@@ -25,13 +26,14 @@ export default async function AdminLayout({
   }
 
   return (
-    <SessionProvider session={session}>
+    <AdminProviders session={session}>
       <div className="admin-shell">
         <AdminSidebar />
         <main className="admin-main">
+          <AdminHeader />
           <div className="admin-content">{children}</div>
         </main>
       </div>
-    </SessionProvider>
+    </AdminProviders>
   );
 }

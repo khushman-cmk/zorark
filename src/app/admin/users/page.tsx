@@ -1,8 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { type ColumnDef } from "@tanstack/react-table";
-import DataTable from "../_components/DataTable";
+import DataTable, { type Column } from "../_components/DataTable";
 import ConfirmModal from "../_components/ConfirmModal";
 
 interface User {
@@ -30,7 +29,6 @@ export default function UsersPage() {
   const [loading, setLoading] = useState(true);
   const [searchInput, setSearchInput] = useState("");
 
-  // Confirm modals
   const [suspendTarget, setSuspendTarget] = useState<User | null>(null);
   const [promoteTarget, setPromoteTarget] = useState<User | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
@@ -62,72 +60,59 @@ export default function UsersPage() {
     fetchUsers();
   }
 
-  const columns: ColumnDef<User, unknown>[] = [
+  const columns: Column<User>[] = [
     {
-      accessorKey: "name",
+      key: "name",
       header: "Name",
-      cell: (info) => (
-        <span style={{ fontWeight: 600 }}>{info.getValue() as string}</span>
-      ),
+      cell: (u) => <span style={{ fontWeight: 600 }}>{u.name}</span>,
     },
-    { accessorKey: "email", header: "Email" },
-    { accessorKey: "mobile", header: "Mobile" },
+    { key: "email", header: "Email" },
+    { key: "mobile", header: "Mobile" },
     {
-      accessorKey: "role",
+      key: "role",
       header: "Role",
-      cell: (info) => (
-        <span className={`badge ${info.getValue() === "admin" ? "badge--amber" : "badge--gray"}`}>
-          {info.getValue() as string}
+      cell: (u) => (
+        <span className={`badge ${u.role === "admin" ? "badge--amber" : "badge--gray"}`}>
+          {u.role}
         </span>
       ),
     },
     {
-      accessorKey: "isActive",
+      key: "isActive",
       header: "Status",
-      cell: (info) => (
-        <span className={`badge ${info.getValue() ? "badge--green" : "badge--red"}`}>
-          {info.getValue() ? "Active" : "Suspended"}
+      cell: (u) => (
+        <span className={`badge ${u.isActive ? "badge--green" : "badge--red"}`}>
+          {u.isActive ? "Active" : "Suspended"}
         </span>
       ),
     },
     {
-      accessorKey: "createdAt",
+      key: "createdAt",
       header: "Joined",
-      cell: (info) =>
-        new Intl.DateTimeFormat("en-IN", { dateStyle: "medium" }).format(
-          new Date(info.getValue() as string)
-        ),
+      cell: (u) =>
+        new Intl.DateTimeFormat("en-IN", { dateStyle: "medium" }).format(new Date(u.createdAt)),
     },
     {
-      id: "actions",
+      key: "id",
       header: "Actions",
-      cell: ({ row }) => {
-        const user = row.original;
-        return (
-          <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
-            <button
-              className={`btn btn--sm ${user.isActive ? "btn--danger" : "btn--ghost"}`}
-              onClick={() => setSuspendTarget(user)}
-            >
-              {user.isActive ? "Suspend" : "Unsuspend"}
+      cell: (u) => (
+        <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
+          <button
+            className={`btn btn--sm ${u.isActive ? "btn--danger" : "btn--ghost"}`}
+            onClick={() => setSuspendTarget(u)}
+          >
+            {u.isActive ? "Suspend" : "Unsuspend"}
+          </button>
+          {u.role !== "admin" && (
+            <button className="btn btn--sm btn--ghost" onClick={() => setPromoteTarget(u)}>
+              Make Admin
             </button>
-            {user.role !== "admin" && (
-              <button
-                className="btn btn--sm btn--ghost"
-                onClick={() => setPromoteTarget(user)}
-              >
-                Make Admin
-              </button>
-            )}
-            <button
-              className="btn btn--sm btn--danger"
-              onClick={() => setDeleteTarget(user)}
-            >
-              Delete
-            </button>
-          </div>
-        );
-      },
+          )}
+          <button className="btn btn--sm btn--danger" onClick={() => setDeleteTarget(u)}>
+            Delete
+          </button>
+        </div>
+      ),
     },
   ];
 
@@ -138,7 +123,6 @@ export default function UsersPage() {
         <p className="page-subtitle">View, suspend, promote and remove users</p>
       </div>
 
-      {/* Toolbar */}
       <div className="table-container">
         <div className="table-toolbar">
           <input
@@ -151,26 +135,16 @@ export default function UsersPage() {
               if (e.key === "Enter") { setSearch(searchInput); setPage(1); }
             }}
           />
-          <button
-            className="btn btn--ghost btn--sm"
-            onClick={() => { setSearch(searchInput); setPage(1); }}
-          >
+          <button className="btn btn--ghost btn--sm" onClick={() => { setSearch(searchInput); setPage(1); }}>
             Search
           </button>
-          <select
-            className="select"
-            value={roleFilter}
-            onChange={(e) => { setRoleFilter(e.target.value); setPage(1); }}
-          >
+          <select className="select" value={roleFilter} onChange={(e) => { setRoleFilter(e.target.value); setPage(1); }}>
             <option value="">All roles</option>
             <option value="user">User</option>
             <option value="admin">Admin</option>
           </select>
           {(search || roleFilter) && (
-            <button
-              className="btn btn--ghost btn--sm"
-              onClick={() => { setSearch(""); setSearchInput(""); setRoleFilter(""); setPage(1); }}
-            >
+            <button className="btn btn--ghost btn--sm" onClick={() => { setSearch(""); setSearchInput(""); setRoleFilter(""); setPage(1); }}>
               Clear
             </button>
           )}
@@ -188,24 +162,16 @@ export default function UsersPage() {
         />
       </div>
 
-      {/* Suspend/Unsuspend Modal */}
       <ConfirmModal
         open={!!suspendTarget}
         onOpenChange={(o) => !o && setSuspendTarget(null)}
         title={suspendTarget?.isActive ? "Suspend User" : "Unsuspend User"}
-        description={
-          suspendTarget?.isActive
-            ? `Suspend ${suspendTarget.name}? They will be unable to log in.`
-            : `Re-activate ${suspendTarget?.name}? They will be able to log in again.`
-        }
+        description={suspendTarget?.isActive ? `Suspend ${suspendTarget.name}? They will be unable to log in.` : `Re-activate ${suspendTarget?.name}? They will be able to log in again.`}
         confirmLabel={suspendTarget?.isActive ? "Suspend" : "Unsuspend"}
         danger={suspendTarget?.isActive}
-        onConfirm={() =>
-          suspendTarget && patchUser(suspendTarget.id, { isActive: !suspendTarget.isActive })
-        }
+        onConfirm={() => suspendTarget && patchUser(suspendTarget.id, { isActive: !suspendTarget.isActive })}
       />
 
-      {/* Promote Modal */}
       <ConfirmModal
         open={!!promoteTarget}
         onOpenChange={(o) => !o && setPromoteTarget(null)}
@@ -216,7 +182,6 @@ export default function UsersPage() {
         onConfirm={() => promoteTarget && patchUser(promoteTarget.id, { role: "admin" })}
       />
 
-      {/* Delete Modal */}
       <ConfirmModal
         open={!!deleteTarget}
         onOpenChange={(o) => !o && setDeleteTarget(null)}

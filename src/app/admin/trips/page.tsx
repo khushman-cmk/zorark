@@ -1,8 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { type ColumnDef } from "@tanstack/react-table";
-import DataTable from "../_components/DataTable";
+import DataTable, { type Column } from "../_components/DataTable";
 import { AdminBarChart, AdminLineChart, AdminDonutChart } from "../_components/Charts";
 
 interface Trip {
@@ -76,42 +75,42 @@ export default function TripsPage() {
     .filter((d) => d.preference !== null)
     .map((d) => ({ name: d.preference === "toll" ? "With Toll" : "No Toll", value: Number(d.count) }));
 
-  const columns: ColumnDef<Trip, unknown>[] = [
+  const columns: Column<Trip>[] = [
     {
-      accessorKey: "type",
+      key: "type",
       header: "Type",
-      cell: (i) => (
-        <span className={`badge ${i.getValue() === "vehicle" ? "badge--blue" : "badge--green"}`}>
-          {i.getValue() as string}
+      cell: (t) => (
+        <span className={`badge ${t.type === "vehicle" ? "badge--blue" : "badge--green"}`}>
+          {t.type}
         </span>
       ),
     },
-    { accessorKey: "origin", header: "Origin" },
-    { accessorKey: "destination", header: "Destination" },
+    { key: "origin", header: "Origin" },
+    { key: "destination", header: "Destination" },
     {
-      accessorKey: "distanceKm",
+      key: "distanceKm",
       header: "Distance",
-      cell: (i) => (i.getValue() ? `${parseFloat(i.getValue() as string).toFixed(1)} km` : "—"),
+      cell: (t) => (t.distanceKm ? `${parseFloat(t.distanceKm).toFixed(1)} km` : "—"),
     },
     {
-      accessorKey: "fuelCost",
+      key: "fuelCost",
       header: "Fuel Cost",
-      cell: (i) => (i.getValue() ? `₹${parseFloat(i.getValue() as string).toFixed(2)}` : "—"),
+      cell: (t) => (t.fuelCost ? `₹${parseFloat(t.fuelCost).toFixed(2)}` : "—"),
     },
     {
-      accessorKey: "routePreference",
+      key: "routePreference",
       header: "Route",
-      cell: (i) => (
-        <span className={`badge ${i.getValue() === "toll" ? "badge--amber" : "badge--gray"}`}>
-          {(i.getValue() as string) ?? "—"}
+      cell: (t) => (
+        <span className={`badge ${t.routePreference === "toll" ? "badge--amber" : "badge--gray"}`}>
+          {t.routePreference ?? "—"}
         </span>
       ),
     },
     {
-      accessorKey: "createdAt",
+      key: "createdAt",
       header: "Date",
-      cell: (i) =>
-        new Intl.DateTimeFormat("en-IN", { dateStyle: "medium" }).format(new Date(i.getValue() as string)),
+      cell: (t) =>
+        new Intl.DateTimeFormat("en-IN", { dateStyle: "medium" }).format(new Date(t.createdAt)),
     },
   ];
 
@@ -122,29 +121,18 @@ export default function TripsPage() {
         <p className="page-subtitle">Read-only insight into all trips across all users</p>
       </div>
 
-      {/* Charts */}
       {analyticsLoading ? (
         <div className="loading-shimmer" style={{ height: 240, borderRadius: 12, marginBottom: "1rem" }} />
       ) : (
         <div className="charts-grid">
-          <AdminBarChart
-            data={barData}
-            title="Top 10 Destinations by Trip Count"
-            color="var(--accent-blue)"
-          />
-          <AdminLineChart
-            data={lineData}
-            title="Avg Fuel Cost per Trip (Last 30 Days)"
-            valueLabel="Avg Cost (₹)"
-            color="var(--accent-green)"
-          />
+          <AdminBarChart data={barData} title="Top 10 Destinations by Trip Count" color="var(--accent-blue)" />
+          <AdminLineChart data={lineData} title="Avg Fuel Cost per Trip (Last 30 Days)" valueLabel="Avg Cost (₹)" color="var(--accent-green)" />
           {donutData.length > 0 && (
             <AdminDonutChart data={donutData} title="Toll vs No-Toll Route Preference" />
           )}
         </div>
       )}
 
-      {/* Trip List */}
       <div className="table-container">
         <div className="table-toolbar">
           <select className="select" value={typeFilter} onChange={(e) => { setTypeFilter(e.target.value); setPage(1); }}>
@@ -152,11 +140,11 @@ export default function TripsPage() {
             <option value="vehicle">Vehicle</option>
             <option value="travel">Travel</option>
           </select>
-          <div className="form-field" style={{ flexDirection: "row", gap: "0.5rem", alignItems: "center" }}>
+          <div style={{ display: "flex", gap: "0.4rem", alignItems: "center" }}>
             <label className="form-label" style={{ whiteSpace: "nowrap" }}>From</label>
             <input className="input" type="date" value={from} onChange={(e) => { setFrom(e.target.value); setPage(1); }} style={{ width: "auto" }} />
           </div>
-          <div className="form-field" style={{ flexDirection: "row", gap: "0.5rem", alignItems: "center" }}>
+          <div style={{ display: "flex", gap: "0.4rem", alignItems: "center" }}>
             <label className="form-label" style={{ whiteSpace: "nowrap" }}>To</label>
             <input className="input" type="date" value={to} onChange={(e) => { setTo(e.target.value); setPage(1); }} style={{ width: "auto" }} />
           </div>
@@ -166,16 +154,7 @@ export default function TripsPage() {
             </button>
           )}
         </div>
-        <DataTable
-          data={response?.data ?? []}
-          columns={columns}
-          total={response?.total ?? 0}
-          page={page}
-          limit={20}
-          onPageChange={setPage}
-          isLoading={loading}
-          emptyMessage="No trips recorded yet."
-        />
+        <DataTable data={response?.data ?? []} columns={columns} total={response?.total ?? 0} page={page} limit={20} onPageChange={setPage} isLoading={loading} emptyMessage="No trips recorded yet." />
       </div>
     </div>
   );

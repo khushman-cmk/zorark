@@ -1,8 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { type ColumnDef } from "@tanstack/react-table";
-import DataTable from "../_components/DataTable";
+import DataTable, { type Column } from "../_components/DataTable";
 import ConfirmModal from "../_components/ConfirmModal";
 import CsvUpload from "../_components/CsvUpload";
 
@@ -16,11 +15,7 @@ interface FuelPrice {
 }
 
 function FuelTypeBadge({ type }: { type: string }) {
-  const map: Record<string, string> = {
-    petrol: "badge--blue",
-    e20: "badge--green",
-    diesel: "badge--amber",
-  };
+  const map: Record<string, string> = { petrol: "badge--blue", e20: "badge--green", diesel: "badge--amber" };
   return <span className={`badge ${map[type] ?? "badge--gray"}`}>{type.toUpperCase()}</span>;
 }
 
@@ -38,8 +33,6 @@ export default function FuelPricesPage() {
   const [editTarget, setEditTarget] = useState<FuelPrice | null>(null);
   const [editPrice, setEditPrice] = useState("");
   const [alert, setAlert] = useState<{ type: "success" | "error"; msg: string } | null>(null);
-
-  // Add form
   const [addForm, setAddForm] = useState({ state: "", city: "", fuelType: "petrol", pricePerLitre: "" });
   const [addOpen, setAddOpen] = useState(false);
 
@@ -69,19 +62,11 @@ export default function FuelPricesPage() {
     setEditTarget(null);
   }
 
-  async function handleDelete(id: string) {
-    await fetch(`/api/admin/fuel-prices/${id}`, { method: "DELETE" });
-    fetchPrices();
-  }
-
   async function handleAdd() {
     const res = await fetch("/api/admin/fuel-prices", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...addForm,
-        pricePerLitre: parseFloat(addForm.pricePerLitre),
-      }),
+      body: JSON.stringify({ ...addForm, pricePerLitre: parseFloat(addForm.pricePerLitre) }),
     });
     if (res.ok) {
       setAlert({ type: "success", msg: "Entry added." });
@@ -93,28 +78,24 @@ export default function FuelPricesPage() {
     }
   }
 
-  const columns: ColumnDef<FuelPrice, unknown>[] = [
-    { accessorKey: "state", header: "State" },
-    { accessorKey: "city", header: "City" },
+  const columns: Column<FuelPrice>[] = [
+    { key: "state", header: "State" },
+    { key: "city", header: "City" },
+    { key: "fuelType", header: "Fuel Type", cell: (fp) => <FuelTypeBadge type={fp.fuelType} /> },
     {
-      accessorKey: "fuelType",
-      header: "Fuel Type",
-      cell: (info) => <FuelTypeBadge type={info.getValue() as string} />,
-    },
-    {
-      accessorKey: "pricePerLitre",
+      key: "pricePerLitre",
       header: "Price/L (₹)",
-      cell: (info) => (
+      cell: (fp) => (
         <span style={{ fontFamily: "var(--font-mono)", fontWeight: 600 }}>
-          ₹{parseFloat(info.getValue() as string).toFixed(2)}
+          ₹{parseFloat(fp.pricePerLitre).toFixed(2)}
         </span>
       ),
     },
     {
-      accessorKey: "updatedAt",
+      key: "updatedAt",
       header: "Last Updated",
-      cell: (info) => {
-        const days = staleDays(info.getValue() as string);
+      cell: (fp) => {
+        const days = staleDays(fp.updatedAt);
         return (
           <span style={{ color: days > 7 ? "var(--accent-amber)" : "var(--text-muted)", fontSize: "0.75rem" }}>
             {days === 0 ? "Today" : `${days}d ago`}
@@ -123,27 +104,18 @@ export default function FuelPricesPage() {
       },
     },
     {
-      id: "actions",
+      key: "id",
       header: "Actions",
-      cell: ({ row }) => {
-        const fp = row.original;
-        return (
-          <div style={{ display: "flex", gap: "0.4rem" }}>
-            <button
-              className="btn btn--sm btn--ghost"
-              onClick={() => { setEditTarget(fp); setEditPrice(fp.pricePerLitre); }}
-            >
-              Edit
-            </button>
-            <button
-              className="btn btn--sm btn--danger"
-              onClick={() => setDeleteTarget(fp)}
-            >
-              Delete
-            </button>
-          </div>
-        );
-      },
+      cell: (fp) => (
+        <div style={{ display: "flex", gap: "0.4rem" }}>
+          <button className="btn btn--sm btn--ghost" onClick={() => { setEditTarget(fp); setEditPrice(fp.pricePerLitre); }}>
+            Edit
+          </button>
+          <button className="btn btn--sm btn--danger" onClick={() => setDeleteTarget(fp)}>
+            Delete
+          </button>
+        </div>
+      ),
     },
   ];
 
@@ -161,7 +133,6 @@ export default function FuelPricesPage() {
         </div>
       )}
 
-      {/* CSV Upload */}
       <div style={{ marginBottom: "1.5rem" }}>
         <h2 style={{ fontSize: "0.8rem", fontWeight: 600, marginBottom: "0.5rem", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
           Bulk Update via CSV
@@ -179,7 +150,6 @@ export default function FuelPricesPage() {
 
       <div className="section-divider" />
 
-      {/* Table */}
       <div className="table-container">
         <div className="table-toolbar">
           <input className="input" style={{ maxWidth: 160 }} placeholder="Filter by state…" value={stateFilter} onChange={(e) => setStateFilter(e.target.value)} />
@@ -207,7 +177,6 @@ export default function FuelPricesPage() {
         />
       </div>
 
-      {/* Edit Modal */}
       <ConfirmModal
         open={!!editTarget}
         onOpenChange={(o) => !o && setEditTarget(null)}
@@ -228,7 +197,6 @@ export default function FuelPricesPage() {
         />
       </ConfirmModal>
 
-      {/* Delete Modal */}
       <ConfirmModal
         open={!!deleteTarget}
         onOpenChange={(o) => !o && setDeleteTarget(null)}
@@ -236,10 +204,9 @@ export default function FuelPricesPage() {
         description={`Remove ${deleteTarget?.fuelType?.toUpperCase()} price for ${deleteTarget?.city}, ${deleteTarget?.state}?`}
         confirmLabel="Delete"
         danger
-        onConfirm={() => deleteTarget && handleDelete(deleteTarget.id)}
+        onConfirm={() => deleteTarget && fetch(`/api/admin/fuel-prices/${deleteTarget.id}`, { method: "DELETE" }).then(() => fetchPrices())}
       />
 
-      {/* Add Modal */}
       <ConfirmModal
         open={addOpen}
         onOpenChange={setAddOpen}

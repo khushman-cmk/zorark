@@ -24,6 +24,7 @@ export default function ConfirmModal({
   cancelLabel = "Cancel",
   onConfirm,
   danger = false,
+  children,
 }: ConfirmModalProps) {
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
@@ -34,6 +35,7 @@ export default function ConfirmModal({
           <Dialog.Description className="modal-description">
             {description}
           </Dialog.Description>
+          {children}
           <div className="modal-actions">
             <Dialog.Close asChild>
               <button className="btn btn--ghost">{cancelLabel}</button>

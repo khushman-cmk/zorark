@@ -1,15 +1,19 @@
 "use client";
 
-import {
-  useReactTable,
-  getCoreRowModel,
-  flexRender,
-  type ColumnDef,
-} from "@tanstack/react-table";
+import { ReactNode } from "react";
+
+// Simple, self-contained paginated table — no TanStack Table v9 dependency
+// to avoid its complex multi-generic TypeScript API.
+
+export interface Column<T> {
+  key: string;
+  header: string;
+  cell?: (row: T) => ReactNode;
+}
 
 interface DataTableProps<T> {
   data: T[];
-  columns: ColumnDef<T, unknown>[];
+  columns: Column<T>[];
   total: number;
   page: number;
   limit: number;
@@ -18,7 +22,7 @@ interface DataTableProps<T> {
   emptyMessage?: string;
 }
 
-export default function DataTable<T>({
+export default function DataTable<T extends object>({
   data,
   columns,
   total,
@@ -28,32 +32,18 @@ export default function DataTable<T>({
   isLoading,
   emptyMessage = "No records found",
 }: DataTableProps<T>) {
-  const table = useReactTable({
-    data,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    manualPagination: true,
-    pageCount: Math.ceil(total / limit),
-  });
-
-  const totalPages = Math.ceil(total / limit);
+  const totalPages = Math.ceil(total / limit) || 1;
 
   return (
     <div className="data-table-wrapper">
       <div className="table-scroll">
         <table className="data-table">
           <thead>
-            {table.getHeaderGroups().map((hg) => (
-              <tr key={hg.id}>
-                {hg.headers.map((header) => (
-                  <th key={header.id}>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(header.column.columnDef.header, header.getContext())}
-                  </th>
-                ))}
-              </tr>
-            ))}
+            <tr>
+              {columns.map((col) => (
+                <th key={col.key}>{col.header}</th>
+              ))}
+            </tr>
           </thead>
           <tbody>
             {isLoading ? (
@@ -62,18 +52,20 @@ export default function DataTable<T>({
                   <div className="loading-shimmer" />
                 </td>
               </tr>
-            ) : table.getRowModel().rows.length === 0 ? (
+            ) : data.length === 0 ? (
               <tr>
                 <td colSpan={columns.length} className="table-empty-cell">
                   {emptyMessage}
                 </td>
               </tr>
             ) : (
-              table.getRowModel().rows.map((row) => (
-                <tr key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
-                    <td key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+              data.map((row, i) => (
+                <tr key={(row as Record<string, unknown>).id as string ?? i}>
+                  {columns.map((col) => (
+                    <td key={col.key}>
+                      {col.cell
+                        ? col.cell(row)
+                        : String((row as Record<string, unknown>)[col.key] ?? "—")}
                     </td>
                   ))}
                 </tr>
@@ -91,37 +83,11 @@ export default function DataTable<T>({
             : `${(page - 1) * limit + 1}–${Math.min(page * limit, total)} of ${total}`}
         </span>
         <div className="pagination-controls">
-          <button
-            className="pagination-btn"
-            onClick={() => onPageChange(1)}
-            disabled={page <= 1}
-          >
-            «
-          </button>
-          <button
-            className="pagination-btn"
-            onClick={() => onPageChange(page - 1)}
-            disabled={page <= 1}
-          >
-            ‹
-          </button>
-          <span className="pagination-page">
-            {page} / {totalPages || 1}
-          </span>
-          <button
-            className="pagination-btn"
-            onClick={() => onPageChange(page + 1)}
-            disabled={page >= totalPages}
-          >
-            ›
-          </button>
-          <button
-            className="pagination-btn"
-            onClick={() => onPageChange(totalPages)}
-            disabled={page >= totalPages}
-          >
-            »
-          </button>
+          <button className="pagination-btn" onClick={() => onPageChange(1)} disabled={page <= 1}>«</button>
+          <button className="pagination-btn" onClick={() => onPageChange(page - 1)} disabled={page <= 1}>‹</button>
+          <span className="pagination-page">{page} / {totalPages}</span>
+          <button className="pagination-btn" onClick={() => onPageChange(page + 1)} disabled={page >= totalPages}>›</button>
+          <button className="pagination-btn" onClick={() => onPageChange(totalPages)} disabled={page >= totalPages}>»</button>
         </div>
       </div>
     </div>

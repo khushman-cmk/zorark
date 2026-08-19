@@ -2,7 +2,7 @@ interface StatCardProps {
   label: string;
   value: string | number;
   sub?: string;
-  icon?: string;
+  icon?: React.ReactNode | string;
   accent?: "blue" | "green" | "amber" | "red";
 }
 

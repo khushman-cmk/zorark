@@ -3,35 +3,37 @@
    ═══════════════════════════════════════════════════════════════════ */
 
 :root {
-  /* Palette */
-  --admin-bg: hsl(220 16% 10%);
-  --surface-1: hsl(220 14% 14%);
-  --surface-2: hsl(220 12% 18%);
-  --surface-3: hsl(220 10% 24%);
-  --border: hsl(220 10% 24%);
-  --border-subtle: hsl(220 10% 20%);
+  /* Palette (Light Theme for Workspace) */
+  --admin-bg: #f8f9fa;
+  --surface-1: #ffffff;
+  --surface-2: #f1f5f9;
+  --surface-3: #e2e8f0;
+  --border: #e2e8f0;
+  --border-subtle: #f1f5f9;
 
   /* Text */
-  --text-primary: hsl(210 20% 94%);
-  --text-secondary: hsl(215 14% 68%);
-  --text-muted: hsl(215 12% 52%);
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
 
   /* Accents */
   --accent-blue: hsl(217 91% 60%);
-  --accent-blue-dim: hsl(217 60% 20%);
+  --accent-blue-dim: hsl(217 60% 90%);
   --accent-green: hsl(160 84% 39%);
-  --accent-green-dim: hsl(160 50% 15%);
-  --accent-amber: hsl(43 96% 56%);
-  --accent-amber-dim: hsl(43 60% 18%);
+  --accent-green-dim: hsl(160 50% 90%);
+  --accent-amber: hsl(43 96% 46%);
+  --accent-amber-dim: hsl(43 60% 90%);
   --accent-red: hsl(0 84% 60%);
-  --accent-red-dim: hsl(0 50% 18%);
+  --accent-red-dim: hsl(0 50% 90%);
+  --accent-pink: #ff2a75;
+  --accent-pink-dim: rgba(255, 42, 117, 0.15);
 
   /* Chart grid */
-  --chart-grid: hsl(220 10% 22%);
+  --chart-grid: #f1f5f9;
 
   /* Sidebar */
-  --sidebar-w: 220px;
-  --sidebar-collapsed-w: 60px;
+  --sidebar-w: 240px;
+  --sidebar-collapsed-w: 70px;
 
   /* Typography */
   --font-mono: "Geist Mono", ui-monospace, monospace;
@@ -263,15 +265,15 @@
 .stat-card::before {
   content: "";
   position: absolute;
-  top: 0;
+  bottom: 0;
   left: 0;
   right: 0;
   height: 2px;
 }
-.stat-card--blue::before { background: var(--accent-blue); }
-.stat-card--green::before { background: var(--accent-green); }
-.stat-card--amber::before { background: var(--accent-amber); }
-.stat-card--red::before { background: var(--accent-red); }
+.stat-card--blue::before { background: var(--accent-pink); }
+.stat-card--green::before { background: var(--accent-pink); }
+.stat-card--amber::before { background: var(--accent-pink); }
+.stat-card--red::before { background: var(--accent-pink); }
 
 .stat-icon {
   font-size: 1.5rem;

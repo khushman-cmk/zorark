@@ -69,7 +69,7 @@ export const authOptions: NextAuthOptions = {
     jwt({ token, user }) {
       // On initial sign-in, `user` is the object returned from `authorize`.
       if (user) {
-        token.role = (user as { role?: string }).role ?? "user";
+        token.role = ((user as { role?: string }).role ?? "user") as "user" | "admin";
         token.id = user.id;
       }
       return token;
