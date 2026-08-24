@@ -4,12 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { signOut, useSession } from "next-auth/react";
-import { Users, Fuel, Car, BarChart3, Navigation, ClipboardList, FileText, Settings, LogOut, Home } from "lucide-react";
+import { Users, Fuel, Car, BarChart3, Navigation, ClipboardList, FileText, Settings, LogOut, Home, User } from "lucide-react";
 
 const MANAGEMENT_ITEMS = [
   { href: "/admin/users", label: "Users", icon: <Users size={18} /> },
   { href: "/admin/fuel-prices", label: "Fuel Prices", icon: <Fuel size={18} /> },
-  { href: "/admin/providers", label: "Travel Providers", icon: <Car size={18} /> },
   { href: "/admin/trips", label: "Trips", icon: <BarChart3 size={18} /> },
   { href: "/admin/tolls", label: "Tolls", icon: <Navigation size={18} /> },
 ];
@@ -30,24 +29,24 @@ export default function AdminSidebar() {
     <aside
       className={`admin-sidebar ${collapsed ? "admin-sidebar--collapsed" : ""}`}
       style={{
-        background: "#111827",
-        color: "#f3f4f6",
-        borderRight: "none",
+        background: "var(--surface-1)",
+        color: "var(--text-primary)",
+        borderRight: "1px solid var(--border)",
       }}
     >
       {/* Header */}
-      <div className="sidebar-header" style={{ borderBottom: "1px solid #1f2937", padding: "1.5rem 1rem" }}>
+      <div className="sidebar-header" style={{ borderBottom: "1px solid var(--border)", padding: "1.5rem 1rem" }}>
         {!collapsed && (
           <div className="sidebar-brand">
-            <span style={{ color: "#ff2a75", fontSize: "1.5rem", fontWeight: "bold" }}>Z</span>
-            <span className="brand-text" style={{ color: "#fff", fontSize: "1.25rem" }}>Zippi</span>
+            <span style={{ color: "var(--accent-pink)", fontSize: "1.5rem", fontWeight: "bold" }}>Z</span>
+            <span className="brand-text" style={{ color: "var(--text-primary)", fontSize: "1.25rem" }}>Zippi</span>
           </div>
         )}
         <button
           className="collapse-btn"
           onClick={() => setCollapsed((c) => !c)}
           title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          style={{ borderColor: "#374151", color: "#9ca3af" }}
+          style={{ borderColor: "var(--border)", color: "var(--text-secondary)" }}
         >
           {collapsed ? "→" : "←"}
         </button>
@@ -59,13 +58,24 @@ export default function AdminSidebar() {
           href="/admin"
           className={`nav-item ${pathname === "/admin" ? "nav-item--active" : ""}`}
           title={collapsed ? "Dashboard" : undefined}
-          style={pathname === "/admin" ? { background: "#ff2a75", color: "#fff" } : { color: "#d1d5db" }}
+          style={pathname === "/admin" ? { background: "var(--accent-pink)", color: "#fff", boxShadow: "var(--neon-glow, none)" } : { color: "var(--text-secondary)" }}
         >
           <span className="nav-icon"><Home size={18} /></span>
           {!collapsed && <span className="nav-label">Dashboard</span>}
         </Link>
 
-        {!collapsed && <div style={{ fontSize: "0.75rem", fontWeight: "bold", color: "#6b7280", marginTop: "1.5rem", marginBottom: "0.5rem", paddingLeft: "0.75rem", textTransform: "uppercase" }}>Management</div>}
+        <Link
+          href="/admin/profile"
+          className={`nav-item ${pathname.startsWith("/admin/profile") ? "nav-item--active" : ""}`}
+          title={collapsed ? "Profile" : undefined}
+          style={pathname.startsWith("/admin/profile") ? { background: "var(--accent-pink-dim)", color: "var(--accent-pink)", boxShadow: "var(--neon-glow, none)" } : { color: "var(--text-secondary)" }}
+        >
+          <span className="nav-icon"><User size={18} /></span>
+          {!collapsed && <span className="nav-label">Profile</span>}
+          {pathname.startsWith("/admin/profile") && !collapsed && <span className="nav-active-dot" style={{ background: "var(--accent-pink)" }} />}
+        </Link>
+
+        {!collapsed && <div style={{ fontSize: "0.75rem", fontWeight: "bold", color: "var(--text-muted)", marginTop: "1.5rem", marginBottom: "0.5rem", paddingLeft: "0.75rem", textTransform: "uppercase" }}>Management</div>}
         
         {MANAGEMENT_ITEMS.map((item) => {
           const isActive = pathname.startsWith(item.href);
@@ -75,16 +85,16 @@ export default function AdminSidebar() {
               href={item.href}
               className={`nav-item ${isActive ? "nav-item--active" : ""}`}
               title={collapsed ? item.label : undefined}
-              style={isActive ? { background: "rgba(255, 42, 117, 0.1)", color: "#ff2a75" } : { color: "#d1d5db" }}
+              style={isActive ? { background: "var(--accent-pink-dim)", color: "var(--accent-pink)", boxShadow: "var(--neon-glow, none)" } : { color: "var(--text-secondary)" }}
             >
               <span className="nav-icon">{item.icon}</span>
               {!collapsed && <span className="nav-label">{item.label}</span>}
-              {isActive && !collapsed && <span className="nav-active-dot" style={{ background: "#ff2a75" }} />}
+              {isActive && !collapsed && <span className="nav-active-dot" style={{ background: "var(--accent-pink)" }} />}
             </Link>
           );
         })}
 
-        {!collapsed && <div style={{ fontSize: "0.75rem", fontWeight: "bold", color: "#6b7280", marginTop: "1.5rem", marginBottom: "0.5rem", paddingLeft: "0.75rem", textTransform: "uppercase" }}>System</div>}
+        {!collapsed && <div style={{ fontSize: "0.75rem", fontWeight: "bold", color: "var(--text-muted)", marginTop: "1.5rem", marginBottom: "0.5rem", paddingLeft: "0.75rem", textTransform: "uppercase" }}>System</div>}
         
         {SYSTEM_ITEMS.map((item) => {
           const isActive = pathname.startsWith(item.href);
@@ -94,26 +104,26 @@ export default function AdminSidebar() {
               href={item.href}
               className={`nav-item ${isActive ? "nav-item--active" : ""}`}
               title={collapsed ? item.label : undefined}
-              style={isActive ? { background: "rgba(255, 42, 117, 0.1)", color: "#ff2a75" } : { color: "#d1d5db" }}
+              style={isActive ? { background: "var(--accent-pink-dim)", color: "var(--accent-pink)", boxShadow: "var(--neon-glow, none)" } : { color: "var(--text-secondary)" }}
             >
               <span className="nav-icon">{item.icon}</span>
               {!collapsed && <span className="nav-label">{item.label}</span>}
-              {isActive && !collapsed && <span className="nav-active-dot" style={{ background: "#ff2a75" }} />}
+              {isActive && !collapsed && <span className="nav-active-dot" style={{ background: "var(--accent-pink)" }} />}
             </Link>
           );
         })}
       </nav>
 
       {/* Footer */}
-      <div className="sidebar-footer" style={{ borderTop: "1px solid #1f2937", padding: "1rem" }}>
+      <div className="sidebar-footer" style={{ borderTop: "1px solid var(--border)", padding: "1rem" }}>
         {!collapsed && (
-          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "1rem", padding: "0.75rem", background: "#1f2937", borderRadius: "8px" }}>
-            <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: "#ff2a75", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", textTransform: "uppercase" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "1rem", padding: "0.75rem", background: "var(--surface-2)", borderRadius: "8px" }}>
+            <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: "var(--accent-pink)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", textTransform: "uppercase" }}>
               {adminName.charAt(0)}
             </div>
             <div style={{ display: "flex", flexDirection: "column", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              <span style={{ fontSize: "0.8rem", color: "#fff", fontWeight: "bold", overflow: "hidden", textOverflow: "ellipsis" }}>{adminName}</span>
-              <span style={{ fontSize: "0.7rem", color: "#9ca3af" }}>Super Admin</span>
+              <span style={{ fontSize: "0.8rem", color: "var(--text-primary)", fontWeight: "bold", overflow: "hidden", textOverflow: "ellipsis" }}>{adminName}</span>
+              <span style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>Super Admin</span>
             </div>
           </div>
         )}
@@ -121,7 +131,7 @@ export default function AdminSidebar() {
           className="signout-btn"
           onClick={() => signOut({ callbackUrl: "/login" })}
           title={collapsed ? "Sign out" : undefined}
-          style={{ color: "#d1d5db" }}
+          style={{ color: "var(--text-secondary)" }}
         >
           <span className="nav-icon"><LogOut size={18} /></span>
           {!collapsed && <span>Logout</span>}

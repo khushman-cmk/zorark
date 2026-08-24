@@ -37,6 +37,18 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   mobile: text("mobile").notNull().unique(),
   passwordHash: text("password_hash").notNull(),
+  
+  // Profile Additions
+  profilePhoto: text("profile_photo"),
+  jobTitle: text("job_title"),
+  employeeId: text("employee_id"),
+  
+  // Security Additions
+  twoFactorEnabled: boolean("two_factor_enabled").notNull().default(false),
+  twoFactorSecret: text("two_factor_secret"),
+  recoveryEmail: text("recovery_email"),
+  recoveryPhone: text("recovery_phone"),
+  
   locationConsent: boolean("location_consent").notNull().default(false),
   role: text("role").notNull().default("user"), // "user" | "admin"
   isActive: boolean("is_active").notNull().default(true),
@@ -123,3 +135,35 @@ export const adminLogs = pgTable("admin_logs", {
   details: json("details"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+
+// --- Active Sessions ---------------------------------------------------------
+export const userSessions = pgTable("user_sessions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").notNull().references(() => users.id),
+  device: text("device"),
+  location: text("location"),
+  ipAddress: text("ip_address"),
+  isActive: boolean("is_active").notNull().default(true),
+  loginTime: timestamp("login_time", { withTimezone: true }).notNull().defaultNow(),
+  lastActive: timestamp("last_active", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// --- Login History -----------------------------------------------------------
+export const loginHistory = pgTable("login_history", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").references(() => users.id),
+  ipAddress: text("ip_address"),
+  device: text("device"),
+  status: text("status").notNull(), // "success" | "failed"
+  timestamp: timestamp("timestamp", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// --- Backup Codes ------------------------------------------------------------
+export const backupCodes = pgTable("backup_codes", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").notNull().references(() => users.id),
+  code: text("code").notNull(),
+  used: boolean("used").notNull().default(false),
+});
+

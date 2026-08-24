@@ -27,7 +27,6 @@ interface DashboardData {
 const QUICK_ACTIONS = [
   { href: "/admin/users", icon: <Users size={18} />, label: "Manage Users" },
   { href: "/admin/fuel-prices", icon: <Droplet size={18} />, label: "Update Fuel Prices" },
-  { href: "/admin/providers", icon: <Car size={18} />, label: "Manage Providers" },
   { href: "/admin/trips", icon: <ClipboardList size={18} />, label: "View Trips" },
   { href: "/admin/logs", icon: <FileText size={18} />, label: "Audit Logs" },
   { href: "/admin/reports", icon: <FileText size={18} />, label: "Reports" },
@@ -44,6 +43,22 @@ function formatDate(iso: string | null) {
 function isStale(iso: string | null) {
   if (!iso) return true;
   return Date.now() - new Date(iso).getTime() > 7 * 24 * 60 * 60 * 1000;
+}
+
+function formatDetails(details: any) {
+  if (!details) return "Performed action";
+  if (typeof details === "string") return details;
+  try {
+    const keys = Object.keys(details);
+    if (keys.length === 0) return "Performed action";
+    // Clean up strings by removing extra quotes if they are just basic strings
+    return keys.map(k => {
+      const val = details[k];
+      return `${k}: ${typeof val === 'object' ? JSON.stringify(val) : val}`;
+    }).join(", ");
+  } catch {
+    return JSON.stringify(details);
+  }
 }
 
 export default function DashboardPage() {
@@ -78,7 +93,7 @@ export default function DashboardPage() {
     <div>
       {/* Page Controls */}
       <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "1.5rem" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", padding: "0.5rem 1rem", background: "#ffffff", border: "1px solid var(--border)", borderRadius: "8px", fontSize: "0.875rem", color: "var(--text-secondary)", fontWeight: 500 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", padding: "0.5rem 1rem", background: "var(--surface-1)", border: "1px solid var(--accent-pink)", borderRadius: "8px", fontSize: "0.875rem", color: "var(--text-secondary)", fontWeight: 500 }}>
           <Calendar size={16} />
           <input 
             type="date" 
@@ -102,46 +117,47 @@ export default function DashboardPage() {
           label="Total Users"
           value={data?.totalUsers ?? 0}
           sub={`+${data?.newUsersThisWeek ?? 0} this week ↗`}
-          icon={<div style={{background: "#ffe4e6", color: "#ff2a75", width: 40, height: 40, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%"}}><Users size={20} /></div>}
+          icon={<div style={{background: "var(--accent-pink-dim)", color: "var(--accent-pink)", width: 40, height: 40, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%"}}><Users size={20} /></div>}
           accent="blue"
         />
         <StatCard
           label="New Signups"
           value={data?.newUsersThisWeek ?? 0}
           sub={`+12.4% this week ↗`}
-          icon={<div style={{background: "#e0e7ff", color: "#4f46e5", width: 40, height: 40, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%"}}><UserPlus size={20} /></div>}
+          icon={<div style={{background: "var(--accent-pink-dim)", color: "var(--accent-pink)", width: 40, height: 40, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%"}}><UserPlus size={20} /></div>}
           accent="blue"
         />
         <StatCard
           label="Total Trips"
           value={totalTrips}
           sub={`+10.6% this week ↗`}
-          icon={<div style={{background: "#dbeafe", color: "#2563eb", width: 40, height: 40, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%"}}><Car size={20} /></div>}
+          icon={<div style={{background: "var(--accent-pink-dim)", color: "var(--accent-pink)", width: 40, height: 40, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%"}}><Car size={20} /></div>}
           accent="blue"
         />
         <StatCard
           label="My Vehicle Trips"
           value={vehicleTrips}
           sub={`${vehiclePct}% of total`}
-          icon={<div style={{background: "#ffedd5", color: "#ea580c", width: 40, height: 40, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%"}}><CarFront size={20} /></div>}
+          icon={<div style={{background: "var(--accent-pink-dim)", color: "var(--accent-pink)", width: 40, height: 40, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%"}}><CarFront size={20} /></div>}
           accent="amber"
         />
         <StatCard
           label="Booked Travel Trips"
           value={travelTrips}
           sub={`${travelPct}% of total`}
-          icon={<div style={{background: "#dcfce7", color: "#16a34a", width: 40, height: 40, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%"}}><Plane size={20} /></div>}
+          icon={<div style={{background: "var(--accent-pink-dim)", color: "var(--accent-pink)", width: 40, height: 40, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%"}}><Plane size={20} /></div>}
           accent="green"
         />
       </div>
+
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1.5rem", marginBottom: "2rem" }}>
         {/* Trips by Type Donut */}
         <div className="chart-card">
           <h2 className="chart-title">Trips by Type</h2>
           <div style={{ display: "flex", alignItems: "center", gap: "2rem" }}>
-            <div style={{ position: "relative", width: 140, height: 140, borderRadius: "50%", background: `conic-gradient(#ff2a75 ${vehiclePct}%, #fbcfe8 ${vehiclePct}% 100%)`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <div style={{ width: 100, height: 100, borderRadius: "50%", background: "#fff", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+            <div style={{ position: "relative", width: 140, height: 140, borderRadius: "50%", background: `conic-gradient(var(--accent-pink) ${vehiclePct}%, var(--surface-3) ${vehiclePct}% 100%)`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <div style={{ width: 100, height: 100, borderRadius: "50%", background: "var(--surface-1)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
                 <span style={{ fontSize: "1.5rem", fontWeight: "bold", color: "var(--text-primary)" }}>{totalTrips}</span>
                 <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Total Trips</span>
               </div>
@@ -257,8 +273,8 @@ export default function DashboardPage() {
                       <span style={{ fontWeight: 500 }}>{log.adminName || "Unknown"}</span>
                     </div>
                   </td>
-                  <td style={{ color: "var(--text-secondary)" }}>
-                    {typeof log.details === "string" ? log.details : JSON.stringify(log.details) || "Performed action"}
+                  <td style={{ color: "var(--text-secondary)", maxWidth: "300px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={typeof log.details === "string" ? log.details : JSON.stringify(log.details)}>
+                    {formatDetails(log.details)}
                   </td>
                   <td style={{ color: "var(--text-muted)" }}>
                     {log.targetTable ? `${log.targetTable} (#${log.targetId?.slice(-4) || '???'})` : "System"}
