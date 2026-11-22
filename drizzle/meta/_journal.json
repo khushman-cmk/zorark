@@ -15,6 +15,20 @@
       "when": 1787485711079,
       "tag": "0001_gigantic_zeigeist",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1788974222939,
+      "tag": "0002_bored_hawkeye",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792855713552,
+      "tag": "0003_keen_gorgon",
+      "breakpoints": true
     }
   ]
 }

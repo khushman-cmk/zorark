@@ -1,0 +1,69 @@
+# GraphHopper 11.1 configuration for Zippi safe routing (Delhi NCR).
+#
+# Build:  npm run gh:import   (regenerates models/safety.json, rebuilds graph-cache/)
+# Run:    npm run gh:start    (http://localhost:8989)
+#
+# Two car profiles share one graph:
+#   car_fast  — the stock car model, tuned to minimise travel time
+#   car_safe  — the same car plus our risk model (models/safety.json, generated
+#               from config/safety-model.json by scripts/gh/import.ts)
+# Risk levels arrive as OSM tags written by the pipeline (scripts/safety):
+#   mtb:scale → mtb_rating (level), sac_scale → hike_rating (water band),
+#   horse_scale → horse_rating (unplanned band).
+graphhopper:
+  datareader.file: ../data/osm/ncr.safety.osm.pbf
+  graph.location: graph-cache
+  custom_models.directory: models
+  datareader.preferred_language: en
+
+  import.osm.ignored_highways: footway,cycleway,path,pedestrian,steps,bridleway,corridor,platform,construction,proposed
+  graph.encoded_values: car_access, car_average_speed, road_access, road_class, road_class_link, road_environment, max_speed, surface, smoothness, track_type, roundabout, mtb_rating, hike_rating, horse_rating
+  graph.dataaccess.default_type: RAM_STORE
+
+  profiles:
+    - name: car_fast
+      turn_costs:
+        vehicle_types: [motorcar, motor_vehicle]
+        u_turn_costs: 60
+      custom_model_files: [car.json, fast.json]
+    - name: car_safe
+      turn_costs:
+        vehicle_types: [motorcar, motor_vehicle]
+        u_turn_costs: 60
+      custom_model_files: [car.json, safety.json]
+
+  # Speed mode for normal queries; hybrid (landmarks) for per-request pothole penalties.
+  profiles_ch:
+    - profile: car_fast
+    - profile: car_safe
+  profiles_lm:
+    - profile: car_fast
+    - profile: car_safe
+  prepare.ch.threads: 2
+  prepare.lm.threads: 2
+  prepare.lm.landmarks: 16
+  prepare.min_network_size: 200
+  prepare.subnetworks.threads: 2
+
+  routing.snap_preventions_default: tunnel, bridge, ferry
+  routing.non_ch.max_waypoint_distance: 200000
+
+server:
+  application_connectors:
+    - type: http
+      port: 8989
+      # localhost only: no firewall prompt, nothing exposed to the network
+      bind_host: localhost
+      max_request_header_size: 50k
+  request_log:
+    appenders: []
+  admin_connectors:
+    - type: http
+      port: 8990
+      bind_host: localhost
+
+logging:
+  appenders:
+    - type: console
+      time_zone: UTC
+      log_format: "%d{HH:mm:ss.SSS} %-5level %logger{30} - %msg%n"

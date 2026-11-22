@@ -4,16 +4,18 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { signOut, useSession } from "next-auth/react";
-import { Users, Fuel, Car, BarChart3, Navigation, ClipboardList, FileText, Settings, LogOut, Home, User } from "lucide-react";
+import { Users, Fuel, Car, BarChart3, Navigation, ClipboardList, FileText, Settings, LogOut, Home, User, PlugZap, Database } from "lucide-react";
 
 const MANAGEMENT_ITEMS = [
-  { href: "/admin/users", label: "Users", icon: <Users size={18} /> },
+  { href: "/admin/customers", label: "Customers", icon: <Users size={18} /> },
   { href: "/admin/fuel-prices", label: "Fuel Prices", icon: <Fuel size={18} /> },
   { href: "/admin/trips", label: "Trips", icon: <BarChart3 size={18} /> },
   { href: "/admin/tolls", label: "Tolls", icon: <Navigation size={18} /> },
 ];
 
 const SYSTEM_ITEMS = [
+  { href: "/admin/connections", label: "Connections", icon: <PlugZap size={18} /> },
+  { href: "/admin/payloads", label: "Payloads", icon: <Database size={18} /> },
   { href: "/admin/logs", label: "Audit Logs", icon: <ClipboardList size={18} /> },
   { href: "/admin/reports", label: "Reports", icon: <FileText size={18} /> },
   { href: "/admin/settings", label: "Settings", icon: <Settings size={18} /> },

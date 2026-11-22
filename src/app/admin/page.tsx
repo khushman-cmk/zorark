@@ -1,36 +1,42 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import StatCard from "./_components/StatCard";
-import { Users, UserPlus, Car, CarFront, Plane, Droplet, Calendar, ClipboardList, FileText, Zap } from "lucide-react";
+import { Users, Calendar, Zap } from "lucide-react";
 
 interface DashboardData {
   totalUsers: number;
   newUsersThisWeek: number;
   activeUsers: number;
-  tripsToday: number;
+  tripsInPeriod: number;
+  totalTrips: number;
   tripsByType: { type: string; count: number }[];
   topDestinations: { destination: string; count: number }[];
-  fuelPricesLastUpdated: string | null;
+  recentTrips: {
+    id: string;
+    userName: string;
+    userEmail: string;
+    type: string;
+    origin: string;
+    destination: string;
+    createdAt: string;
+  }[];
+  recentSignups: {
+    id: string;
+    name: string;
+    email: string;
+    createdAt: string;
+  }[];
   recentActivity: {
     id: string;
     action: string;
-    details: any;
+    details: unknown;
     targetTable: string | null;
     targetId: string | null;
     createdAt: string;
     adminName: string | null;
   }[];
 }
-
-const QUICK_ACTIONS = [
-  { href: "/admin/users", icon: <Users size={18} />, label: "Manage Users" },
-  { href: "/admin/fuel-prices", icon: <Droplet size={18} />, label: "Update Fuel Prices" },
-  { href: "/admin/trips", icon: <ClipboardList size={18} />, label: "View Trips" },
-  { href: "/admin/logs", icon: <FileText size={18} />, label: "Audit Logs" },
-  { href: "/admin/reports", icon: <FileText size={18} />, label: "Reports" },
-];
 
 function formatDate(iso: string | null) {
   if (!iso) return "Never";
@@ -40,30 +46,46 @@ function formatDate(iso: string | null) {
   }).format(new Date(iso));
 }
 
-function isStale(iso: string | null) {
-  if (!iso) return true;
-  return Date.now() - new Date(iso).getTime() > 7 * 24 * 60 * 60 * 1000;
-}
-
-function formatDetails(details: any) {
+function formatDetails(details: unknown) {
   if (!details) return "Performed action";
   if (typeof details === "string") return details;
-  try {
-    const keys = Object.keys(details);
-    if (keys.length === 0) return "Performed action";
-    // Clean up strings by removing extra quotes if they are just basic strings
-    return keys.map(k => {
-      const val = details[k];
-      return `${k}: ${typeof val === 'object' ? JSON.stringify(val) : val}`;
-    }).join(", ");
-  } catch {
-    return JSON.stringify(details);
-  }
+  if (typeof details !== "object") return String(details);
+  if (details === null) return "Performed action";
+
+  const entries = Object.entries(details);
+  if (entries.length === 0) return "Performed action";
+
+  return entries
+    .map(([key, value]) => `${key}: ${typeof value === "object" ? JSON.stringify(value) : value}`)
+    .join(", ");
+}
+
+function formatTripType(type: string) {
+  return type === "vehicle" ? "Vehicle" : type === "travel" ? "Travel" : type;
+}
+
+function formatTripDate(iso: string) {
+  return new Intl.DateTimeFormat("en-IN", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(iso));
+}
+
+function tripTypeBadgeClass(type: string) {
+  return type === "vehicle" ? "badge badge--blue" : "badge badge--green";
+}
+
+function formatRecentTripDetails(trip: DashboardData["recentTrips"][number]) {
+  return {
+    customer: trip.userName || trip.userEmail,
+    route: `${trip.origin} → ${trip.destination}`,
+    type: formatTripType(trip.type),
+    date: formatTripDate(trip.createdAt),
+  };
 }
 
 export default function DashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
-  const [loading, setLoading] = useState(true);
 
   // Default to a 1 week range
   const now = new Date();
@@ -72,88 +94,59 @@ export default function DashboardPage() {
   const [endDate, setEndDate] = useState(now.toISOString().split('T')[0]);
 
   useEffect(() => {
-    setLoading(true);
     const query = new URLSearchParams();
     if (startDate) query.append("startDate", startDate);
     if (endDate) query.append("endDate", endDate);
 
     fetch(`/api/admin/dashboard?${query.toString()}`)
       .then((r) => r.json())
-      .then(setData)
-      .finally(() => setLoading(false));
+      .then(setData);
   }, [startDate, endDate]);
 
   const vehicleTrips = data?.tripsByType?.find((t) => t.type === "vehicle")?.count ?? 0;
   const travelTrips = data?.tripsByType?.find((t) => t.type === "travel")?.count ?? 0;
-  const totalTrips = vehicleTrips + travelTrips;
+  const totalTrips = data?.totalTrips ?? vehicleTrips + travelTrips;
   const vehiclePct = totalTrips ? Math.round((vehicleTrips / totalTrips) * 100) : 0;
   const travelPct = totalTrips ? Math.round((travelTrips / totalTrips) * 100) : 0;
 
   return (
-    <div>
+    <div className="admin-dashboard">
       {/* Page Controls */}
-      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "1.5rem" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", padding: "0.5rem 1rem", background: "var(--surface-1)", border: "1px solid var(--accent-pink)", borderRadius: "8px", fontSize: "0.875rem", color: "var(--text-secondary)", fontWeight: 500 }}>
+      <div className="dashboard-toolbar">
+        <div className="dashboard-date-filter">
           <Calendar size={16} />
-          <input 
+          <input
             type="date" 
             value={startDate} 
             onChange={e => setStartDate(e.target.value)} 
-            style={{ border: "none", outline: "none", color: "inherit", background: "transparent", cursor: "pointer" }} 
+            aria-label="Start date"
           />
           <span> - </span>
-          <input 
+          <input
             type="date" 
             value={endDate} 
             onChange={e => setEndDate(e.target.value)} 
-            style={{ border: "none", outline: "none", color: "inherit", background: "transparent", cursor: "pointer" }} 
+            aria-label="End date"
           />
         </div>
       </div>
 
       {/* KPI Cards */}
-      <div className="stat-grid" style={{ gridTemplateColumns: "repeat(5, 1fr)" }}>
+      {data && <div className="stat-grid dashboard-kpis">
         <StatCard
           label="Total Users"
           value={data?.totalUsers ?? 0}
-          sub={`+${data?.newUsersThisWeek ?? 0} this week ↗`}
+          sub="All customers"
           icon={<div style={{background: "var(--accent-pink-dim)", color: "var(--accent-pink)", width: 40, height: 40, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%"}}><Users size={20} /></div>}
           accent="blue"
         />
-        <StatCard
-          label="New Signups"
-          value={data?.newUsersThisWeek ?? 0}
-          sub={`+12.4% this week ↗`}
-          icon={<div style={{background: "var(--accent-pink-dim)", color: "var(--accent-pink)", width: 40, height: 40, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%"}}><UserPlus size={20} /></div>}
-          accent="blue"
-        />
-        <StatCard
-          label="Total Trips"
-          value={totalTrips}
-          sub={`+10.6% this week ↗`}
-          icon={<div style={{background: "var(--accent-pink-dim)", color: "var(--accent-pink)", width: 40, height: 40, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%"}}><Car size={20} /></div>}
-          accent="blue"
-        />
-        <StatCard
-          label="My Vehicle Trips"
-          value={vehicleTrips}
-          sub={`${vehiclePct}% of total`}
-          icon={<div style={{background: "var(--accent-pink-dim)", color: "var(--accent-pink)", width: 40, height: 40, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%"}}><CarFront size={20} /></div>}
-          accent="amber"
-        />
-        <StatCard
-          label="Booked Travel Trips"
-          value={travelTrips}
-          sub={`${travelPct}% of total`}
-          icon={<div style={{background: "var(--accent-pink-dim)", color: "var(--accent-pink)", width: 40, height: 40, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%"}}><Plane size={20} /></div>}
-          accent="green"
-        />
-      </div>
+      </div>}
 
-
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1.5rem", marginBottom: "2rem" }}>
+      {data && (totalTrips > 0 || data.topDestinations.length > 0) && (
+        <div className="dashboard-analytics-grid">
         {/* Trips by Type Donut */}
-        <div className="chart-card">
+        {totalTrips > 0 && (
+          <div className="chart-card">
           <h2 className="chart-title">Trips by Type</h2>
           <div style={{ display: "flex", alignItems: "center", gap: "2rem" }}>
             <div style={{ position: "relative", width: 140, height: 140, borderRadius: "50%", background: `conic-gradient(var(--accent-pink) ${vehiclePct}%, var(--surface-3) ${vehiclePct}% 100%)`, display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -164,19 +157,21 @@ export default function DashboardPage() {
             </div>
             <div>
               <div style={{ marginBottom: "1rem" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}><span style={{ color: "#ff2a75" }}>●</span> My Vehicle Trips</div>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}><span style={{ color: "#ff2a75" }}>●</span> Vehicle Trips</div>
                 <div style={{ color: "var(--text-muted)", fontSize: "0.875rem", marginLeft: "1.25rem" }}>{vehicleTrips} ({vehiclePct}%)</div>
               </div>
               <div>
-                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}><span style={{ color: "#fbcfe8" }}>●</span> Booked Travel Trips</div>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}><span style={{ color: "#fbcfe8" }}>●</span> Travel Trips</div>
                 <div style={{ color: "var(--text-muted)", fontSize: "0.875rem", marginLeft: "1.25rem" }}>{travelTrips} ({travelPct}%)</div>
               </div>
             </div>
           </div>
-        </div>
+          </div>
+        )}
 
         {/* Top Destinations */}
-        <div className="chart-card">
+        {data.topDestinations.length > 0 && (
+          <div className="chart-card">
           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "1rem" }}>
             <h2 className="chart-title" style={{ margin: 0 }}>Top Destinations</h2>
             <select className="select" style={{ padding: "0.25rem 0.5rem", fontSize: "0.75rem" }}>
@@ -202,49 +197,80 @@ export default function DashboardPage() {
                 </div>
               );
             })}
-            {!data?.topDestinations?.length && !loading && <div style={{ color: "var(--text-muted)", fontSize: "0.875rem" }}>No data</div>}
+          </div>
+          </div>
+        )}
+        </div>
+      )}
+
+      {data && data.recentSignups.length > 0 && (
+        <div className="table-container dashboard-section">
+          <div className="table-toolbar">
+            <h2 style={{ margin: 0, fontSize: "1rem", fontWeight: 700 }}>Recent Customer Signups</h2>
+          </div>
+          <div className="table-scroll">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Customer</th>
+                  <th>Email</th>
+                  <th>Joined</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.recentSignups.map((customer) => (
+                  <tr key={customer.id}>
+                    <td style={{ fontWeight: 600 }}>{customer.name}</td>
+                    <td style={{ color: "var(--text-secondary)" }}>{customer.email}</td>
+                    <td style={{ color: "var(--text-muted)", whiteSpace: "nowrap" }}>{formatDate(customer.createdAt)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
+      )}
 
-        {/* Fuel Prices */}
-        <div className="chart-card" style={{ display: "flex", flexDirection: "column" }}>
-          <h2 className="chart-title" style={{ margin: "0 0 0.5rem 0" }}>Fuel Prices</h2>
-          <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.25rem" }}>
-            Last updated <Calendar size={14} /> {loading ? "..." : formatDate(data?.fuelPricesLastUpdated ?? null)}
-          </div>
-          <div style={{ flex: 1, background: "rgba(255, 42, 117, 0.05)", borderRadius: "12px", padding: "1.5rem", display: "flex", flexDirection: "column", alignItems: "flex-start", justifyContent: "center" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "1rem", marginBottom: "1.5rem" }}>
-              <div style={{ width: 48, height: 48, borderRadius: "50%", background: "#fff", color: "#ff2a75", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
-                <Droplet size={24} />
-              </div>
-              <div>
-                <div style={{ fontWeight: 600, color: "var(--text-primary)" }}>
-                  {isStale(data?.fuelPricesLastUpdated ?? null) ? "Fuel price data may be stale." : "Fuel price data is up to date."}
-                </div>
-              </div>
-            </div>
-            <Link href="/admin/fuel-prices" className="btn" style={{ background: "#fff", border: "1px solid #ff2a75", color: "#ff2a75", width: "100%", justifyContent: "center" }}>
-              Manage Fuel Prices →
-            </Link>
-          </div>
+      {/* Recent customer rides */}
+      {data && data.recentTrips.length > 0 && <div className="table-container dashboard-section">
+        <div className="table-toolbar">
+          <h2 style={{ margin: 0, fontSize: "1rem", fontWeight: 700 }}>Recent Customer Rides</h2>
         </div>
-      </div>
-
-      {/* Quick Actions */}
-      <div style={{ marginBottom: "2rem" }}>
-        <h2 style={{ fontSize: "1rem", fontWeight: 700, marginBottom: "1rem" }}>Quick Actions</h2>
-        <div style={{ display: "flex", gap: "1rem" }}>
-          {QUICK_ACTIONS.map((action) => (
-            <Link key={action.href} href={action.href} style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem", background: "#ffffff", border: "1px solid var(--border)", padding: "1rem", borderRadius: "12px", textDecoration: "none", color: "var(--text-secondary)", fontWeight: 600, fontSize: "0.875rem", boxShadow: "0 1px 2px rgba(0,0,0,0.02)" }}>
-              <span style={{ color: "#ff2a75", display: "flex" }}>{action.icon}</span> {action.label}
-            </Link>
-          ))}
+        <div className="table-scroll">
+          <table className="data-table">
+          <thead>
+            <tr>
+              <th>Customer</th>
+              <th>Route</th>
+              <th>Type</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data?.recentTrips?.map((trip) => {
+              const details = formatRecentTripDetails(trip);
+              return (
+                <tr key={trip.id}>
+                  <td>
+                    <div style={{ display: "flex", flexDirection: "column" }}>
+                      <span style={{ fontWeight: 600 }}>{details.customer}</span>
+                      <span style={{ color: "var(--text-muted)", fontSize: "0.75rem" }}>{trip.userEmail}</span>
+                    </div>
+                  </td>
+                  <td style={{ color: "var(--text-secondary)" }}>{details.route}</td>
+                  <td><span className={tripTypeBadgeClass(trip.type)}>{details.type}</span></td>
+                  <td style={{ color: "var(--text-muted)", whiteSpace: "nowrap" }}>{details.date}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+          </table>
         </div>
-      </div>
+      </div>}
 
-      <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "1.5rem" }}>
+      {data && (data.recentActivity.length > 0 || data.activeUsers > 0 || data.tripsInPeriod > 0) && <div className="dashboard-lower-grid">
         {/* Recent Activity */}
-        <div className="table-container">
+        {data && data.recentActivity.length > 0 && <div className="table-container">
           <div className="table-toolbar">
             <h2 style={{ margin: 0, fontSize: "1rem", fontWeight: 700 }}>Recent Activity</h2>
           </div>
@@ -284,70 +310,29 @@ export default function DashboardPage() {
                   </td>
                 </tr>
               ))}
-              {!data?.recentActivity?.length && !loading && (
-                <tr>
-                  <td colSpan={5} className="table-empty-cell">No recent activity</td>
-                </tr>
-              )}
             </tbody>
           </table>
-        </div>
+        </div>}
 
-        {/* System Overview */}
-        <div className="table-container" style={{ padding: "1.5rem" }}>
-          <h2 style={{ margin: "0 0 1.5rem 0", fontSize: "1rem", fontWeight: 700 }}>System Overview</h2>
-          <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-            
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", color: "var(--text-secondary)", fontSize: "0.875rem", fontWeight: 600 }}>
-                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--accent-green)" }}></div>
-                Active Users
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-                <span style={{ fontWeight: 700, color: "var(--text-primary)" }}>{data?.activeUsers ?? 0}</span>
-                <span style={{ fontSize: "0.75rem", color: "var(--accent-green)", background: "var(--accent-green-dim)", padding: "0.1rem 0.4rem", borderRadius: "999px" }}>+6.8%</span>
-              </div>
-            </div>
-
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", color: "var(--text-secondary)", fontSize: "0.875rem", fontWeight: 600 }}>
-                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--accent-blue)" }}></div>
-                Trips Today
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-                <span style={{ fontWeight: 700, color: "var(--text-primary)" }}>{data?.tripsToday ?? 0}</span>
-                <span style={{ fontSize: "0.75rem", color: "var(--accent-green)", background: "var(--accent-green-dim)", padding: "0.1rem 0.4rem", borderRadius: "999px" }}>+9.3%</span>
-              </div>
-            </div>
-
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", color: "var(--text-secondary)", fontSize: "0.875rem", fontWeight: 600 }}>
-                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--accent-amber)" }}></div>
-                Avg. Trip Dist.
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-                <span style={{ fontWeight: 700, color: "var(--text-primary)" }}>14.2 km</span>
-                <span style={{ fontSize: "0.75rem", color: "var(--accent-green)", background: "var(--accent-green-dim)", padding: "0.1rem 0.4rem", borderRadius: "999px" }}>+0.2</span>
-              </div>
-            </div>
-
-            <div style={{ borderTop: "1px solid var(--border)", paddingTop: "1.5rem", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", color: "var(--text-secondary)", fontSize: "0.875rem", fontWeight: 600 }}>
-                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#a855f7" }}></div>
-                Server Status
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: "var(--accent-green)", fontSize: "0.875rem", fontWeight: 600 }}>
-                All Systems Operational
-                <span style={{ background: "var(--accent-green-dim)", borderRadius: "50%", width: 20, height: 20, display: "flex", alignItems: "center", justifyContent: "center" }}>✓</span>
-              </div>
-            </div>
-
+        {/* Customer activity */}
+        {data && (data.activeUsers > 0 || data.tripsInPeriod > 0) && <div className="table-container dashboard-activity">
+          <div className="table-toolbar">
+            <h2>Customer Activity</h2>
           </div>
-        </div>
+          <div className="dashboard-activity-list">
+            <div>
+              <span>Active customers</span>
+              <strong>{data?.activeUsers ?? 0}</strong>
+            </div>
+            <div>
+              <span>Trips in selected period</span>
+              <strong>{data?.tripsInPeriod ?? 0}</strong>
+            </div>
+          </div>
+        </div>}
+      </div>}
 
-      </div>
-
-      <div style={{ textAlign: "center", marginTop: "3rem", fontSize: "0.75rem", color: "var(--text-muted)" }}>
+      <div className="dashboard-footer">
         © {new Date().getFullYear()} Zippi Admin Panel. All rights reserved.
       </div>
     </div>

@@ -1,0 +1,22 @@
+[project]
+name = "zsafety"
+version = "0.1.0"
+description = "Offline road-safety analysis for Zippi safe routing (Delhi NCR)"
+requires-python = ">=3.12,<3.14"
+dependencies = [
+  "osmium>=4.3",
+  "numpy>=2.1",
+  "scipy>=1.14",
+  "shapely>=2.0.6",
+  "orjson>=3.10",
+]
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

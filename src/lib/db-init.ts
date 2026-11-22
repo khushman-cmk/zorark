@@ -126,6 +126,138 @@ export function ensureDatabaseSetup() {
           created_at timestamptz NOT NULL DEFAULT now()
         )
       `);
+
+      // ── Fare comparison (Uber · Ola · Rapido) ──────────────────────────────
+      // Sealed third-party sessions. iv/tag/ciphertext are AES-256-GCM parts;
+      // the provider name is the additional authenticated data, so a blob
+      // cannot be moved between providers.
+      await db.execute(sql`
+        CREATE TABLE IF NOT EXISTS provider_session (
+          provider text PRIMARY KEY,
+          iv bytea NOT NULL,
+          tag bytea NOT NULL,
+          ciphertext bytea NOT NULL,
+          device_profile_id text,
+          captured_at timestamptz NOT NULL DEFAULT now(),
+          refreshed_at timestamptz,
+          last_ok_at timestamptz,
+          last_fail_at timestamptz,
+          status text NOT NULL DEFAULT 'disconnected',
+          fail_streak integer NOT NULL DEFAULT 0
+        )
+      `);
+
+      // Keyed on a quantised coordinate grid so nearby pickups share a row.
+      await db.execute(sql`
+        CREATE TABLE IF NOT EXISTS fare_cache (
+          route_key text NOT NULL,
+          provider text NOT NULL,
+          options json NOT NULL,
+          fetched_at timestamptz NOT NULL DEFAULT now(),
+          PRIMARY KEY (route_key, provider)
+        )
+      `);
+      await db.execute(sql`
+        CREATE INDEX IF NOT EXISTS fare_cache_provider_fetched_idx
+          ON fare_cache (provider, fetched_at)
+      `);
+
+      // The daily budget brake.
+      await db.execute(sql`
+        CREATE TABLE IF NOT EXISTS rate_ledger (
+          provider text NOT NULL,
+          day date NOT NULL,
+          count integer NOT NULL DEFAULT 0,
+          PRIMARY KEY (provider, day)
+        )
+      `);
+
+      // Every provider response, kept as a capped ring buffer.
+      await db.execute(sql`
+        CREATE TABLE IF NOT EXISTS raw_payload (
+          id bigserial PRIMARY KEY,
+          provider text NOT NULL,
+          captured_at timestamptz NOT NULL DEFAULT now(),
+          route_key text,
+          status text,
+          parsed_count integer,
+          parse_error text,
+          body text NOT NULL
+        )
+      `);
+      await db.execute(sql`
+        CREATE INDEX IF NOT EXISTS raw_payload_provider_captured_idx
+          ON raw_payload (provider, captured_at DESC)
+      `);
+      await db.execute(sql`
+        CREATE INDEX IF NOT EXISTS raw_payload_provider_error_idx
+          ON raw_payload (provider, parse_error)
+      `);
+
+      // Each payload exploded into its individual rides, for price history
+      // and parser-regression detection.
+      await db.execute(sql`
+        CREATE TABLE IF NOT EXISTS ride_observation (
+          id bigserial PRIMARY KEY,
+          payload_id bigint NOT NULL REFERENCES raw_payload(id) ON DELETE CASCADE,
+          provider text NOT NULL,
+          observed_at timestamptz NOT NULL DEFAULT now(),
+          route_key text,
+          ride_name text NOT NULL,
+          category text,
+          price numeric(10,2) NOT NULL,
+          price_low numeric(10,2),
+          price_high numeric(10,2),
+          eta_min integer,
+          currency text NOT NULL DEFAULT 'INR'
+        )
+      `);
+      await db.execute(sql`
+        CREATE INDEX IF NOT EXISTS idx_ride_lookup
+          ON ride_observation (provider, ride_name, observed_at DESC)
+      `);
+      await db.execute(sql`
+        CREATE INDEX IF NOT EXISTS idx_ride_route
+          ON ride_observation (route_key, observed_at DESC)
+      `);
+
+      // ── Safe routing: crowd pothole reports ──────────────────────────────
+      await db.execute(sql`
+        CREATE TABLE IF NOT EXISTS pothole_report (
+          id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+          lat double precision NOT NULL,
+          lng double precision NOT NULL,
+          raw_lat double precision NOT NULL,
+          raw_lng double precision NOT NULL,
+          severity smallint NOT NULL,
+          note text,
+          reported_by uuid REFERENCES users(id) ON DELETE SET NULL,
+          confirmations integer NOT NULL DEFAULT 1,
+          status text NOT NULL DEFAULT 'active',
+          last_confirmed_at timestamptz NOT NULL DEFAULT now(),
+          created_at timestamptz NOT NULL DEFAULT now()
+        )
+      `);
+      await db.execute(sql`
+        CREATE INDEX IF NOT EXISTS pothole_report_status_loc_idx
+          ON pothole_report (status, lat, lng)
+      `);
+      await db.execute(sql`
+        CREATE INDEX IF NOT EXISTS pothole_report_reporter_idx
+          ON pothole_report (reported_by, created_at)
+      `);
+      await db.execute(sql`
+        CREATE TABLE IF NOT EXISTS pothole_confirmation (
+          report_id uuid NOT NULL REFERENCES pothole_report(id) ON DELETE CASCADE,
+          user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          created_at timestamptz NOT NULL DEFAULT now(),
+          PRIMARY KEY (report_id, user_id)
+        )
+      `);
+      await db.execute(sql`
+        CREATE INDEX IF NOT EXISTS pothole_confirmation_user_idx
+          ON pothole_confirmation (user_id, created_at)
+      `);
     })();
   }
 

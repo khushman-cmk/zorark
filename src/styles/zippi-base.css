@@ -1,0 +1,95 @@
+/* ═══════════════════════════════════════════════════════════════════
+   Zippi — base layer
+   Element defaults, focus treatment, keyframes, and the few escape
+   hatches a utility cannot express. Bespoke classes are `zp-` prefixed
+   so they can never collide with admin.css, which stays resident in the
+   document after an /admin -> /home client navigation.
+   ═══════════════════════════════════════════════════════════════════ */
+
+body {
+  background: var(--zp-canvas);
+  color: var(--zp-ink);
+  font-family: var(--font-geist-sans), "Segoe UI", system-ui, sans-serif;
+}
+
+::selection {
+  background: var(--zp-pink-200);
+  color: var(--zp-ink);
+}
+
+/* One visible, on-brand focus ring everywhere, only for keyboard users. */
+:focus-visible {
+  outline: 2px solid var(--zp-pink-strong);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--zp-line-strong) transparent;
+}
+
+/* ── Escape hatches ────────────────────────────────────────────────── */
+
+/* Gradient-filled text for the "Fuel" in "Save on Fuel". */
+.zp-grad-text {
+  background: var(--zp-grad-pink);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Pink fill for buttons and the active nav pill. The solid background-color
+   sits underneath the gradient so contrast checkers read a real 4.5:1 value
+   rather than giving up on the gradient. */
+.zp-fill-pink {
+  background-color: var(--zp-pink-strong);
+  background-image: var(--zp-grad-pink);
+  color: #fff;
+}
+
+/* Fades the top of the sidebar art into the panel. */
+.zp-fade-bottom {
+  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 45%);
+  mask-image: linear-gradient(180deg, transparent 0%, #000 45%);
+}
+
+/* Dissolves the hero illustration into the page on its left and bottom edges,
+   so it reads as part of the background rather than a pasted-in rectangle. */
+.zp-fade-hero {
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 28%),
+    linear-gradient(180deg, transparent 0%, #000 20%, #000 78%, transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(90deg, transparent 0%, #000 28%),
+    linear-gradient(180deg, transparent 0%, #000 20%, #000 78%, transparent 100%);
+  mask-composite: intersect;
+}
+
+/* ── Motion ────────────────────────────────────────────────────────── */
+
+@keyframes zp-rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* Entrance animation done in CSS rather than framer-motion, which would drag
+   every animated section across the server/client boundary. */
+.zp-rise {
+  animation: zp-rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes zp-drift {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-14px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

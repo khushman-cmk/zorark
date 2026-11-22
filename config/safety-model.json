@@ -1,0 +1,90 @@
+
+{
+  "$comment": "Single source of truth for the safe-routing model. Read by the Python pipeline (scripts/safety) and by the Next.js server (src/lib/safety). Changing anything here requires `npm run safety:build` and `npm run gh:import`.",
+  "version": 1,
+  "region": {
+    "name": "Delhi NCR",
+    "bbox": [76.83, 28.35, 77.65, 28.92]
+  },
+  "grid": {
+    "cellM": 100,
+    "lat0": 28.635,
+    "mPerDegLat": 111320,
+    "snapshotRadiusM": 250
+  },
+  "unplanned": {
+    "minorClasses": ["residential", "living_street", "unclassified", "service", "track", "road"],
+    "laneClasses": ["footway", "path", "pedestrian", "steps"],
+    "excludeService": ["parking_aisle", "driveway", "drive-through", "emergency_access"],
+    "excludePrivateService": true,
+    "excludeFootway": ["sidewalk", "crossing", "traffic_island", "link", "access_aisle"],
+    "laneExcludeAreas": {
+      "leisure": ["park", "garden", "pitch", "golf_course", "recreation_ground", "playground", "sports_centre", "stadium", "common", "nature_reserve", "track"],
+      "landuse": ["recreation_ground", "grass", "cemetery", "religious", "education", "military", "forest"],
+      "amenity": ["university", "college", "school", "hospital", "grave_yard"]
+    },
+    "features": {
+      "order": { "w": 0.6, "zeroAt": 0.75, "oneAt": 0.2 },
+      "deadEnd": { "w": 0.3, "zeroAt": 0.1, "oneAt": 0.4 },
+      "fourWay": { "w": 0.05, "zeroAt": 0.45, "oneAt": 0.1 },
+      "laneShare": { "w": 0.05, "zeroAt": 0.1, "oneAt": 0.5 },
+      "mPerJunction": { "w": 0, "zeroAt": 90, "oneAt": 35 },
+      "density": { "w": 0, "zeroAt": 15, "oneAt": 35 }
+    },
+    "fullConfidenceLenM": 600,
+    "minLenM": 300,
+    "bands": [0.35, 0.5, 0.65]
+  },
+  "water": {
+    "polygonTags": {
+      "natural": ["water", "wetland"],
+      "landuse": ["reservoir", "basin"],
+      "waterway": ["riverbank", "dock"],
+      "water": ["*"]
+    },
+    "lineBufferM": { "river": 30, "canal": 10, "drain": 4, "ditch": 2, "stream": 3 },
+    "nearM": 40,
+    "zoneM": 120,
+    "nearShare": 0.3,
+    "nearMinM": 80
+  },
+  "rural": {
+    "landuse": ["farmland", "farmyard", "meadow", "orchard", "vineyard", "greenfield"],
+    "natural": ["scrub", "grassland", "heath", "wood", "sand", "bare_rock"],
+    "landuseForest": ["forest"],
+    "bands": [0.25, 0.5]
+  },
+  "combine": {
+    "sU": [0, 0.35, 0.6, 0.85],
+    "sW": [0, 0.45, 0.8],
+    "sR": [0, 0.3, 0.55],
+    "levelThresholds": [0.15, 0.3, 0.45, 0.6, 0.75, 0.9],
+    "zeroRiskClasses": ["motorway", "motorway_link"]
+  },
+  "priority": {
+    "levelMultiplier": [1, 0.92, 0.82, 0.7, 0.56, 0.42, 0.3],
+    "classInfluence": { "minor": 1, "tertiary": 0.45, "major": 0.15, "motorway": 0 },
+    "unpaved": 0.6,
+    "smoothness": { "BAD": 0.7, "VERY_BAD": 0.5, "HORRIBLE": 0.3, "VERY_HORRIBLE": 0.3, "IMPASSABLE": 0.2 },
+    "track": 0.4,
+    "distanceInfluence": 30
+  },
+  "potholes": {
+    "severityMultiplier": [0.7, 0.45, 0.25],
+    "radiusM": 8,
+    "corridorM": 10,
+    "dedupeM": 20,
+    "snapMaxM": 40,
+    "expireDays": 60,
+    "maxPerUserPerDay": 20
+  },
+  "score": {
+    "riskyThreshold": 0.25,
+    "mergeGapM": 60,
+    "minStretchM": 50,
+    "unavoidableM": 300,
+    "normaliser": 0.7,
+    "sameRouteShare": 0.97,
+    "sameRouteToleranceM": 10
+  }
+}

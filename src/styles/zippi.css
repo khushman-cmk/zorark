@@ -1,0 +1,209 @@
+/* ═══════════════════════════════════════════════════════════════════
+   Zippi — Consumer Design System
+   Light-first with a complete dark variant, driven by the `.dark`
+   class that next-themes puts on <html>.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* next-themes sets a class, but Tailwind v4's `dark:` variant defaults to
+   prefers-color-scheme. Rebind it or every dark: utility ignores the toggle. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Every custom property is `--zp-` prefixed. admin.css is still resident in the
+   document after an /admin -> /home client navigation and defines its own
+   --surface-1 / --border / --text-primary / --accent-pink at :root, so sharing
+   any of those names would let admin values leak into this UI.
+
+   These blocks are deliberately unlayered: unlayered CSS outranks every
+   Tailwind layer, so nothing in base/components/utilities can override them. */
+:root {
+  color-scheme: light;
+
+  /* ── Brand pink, split into three roles by contrast requirement ──
+     Do not collapse these. #ff2e7e is only 3.5:1 on white, which is fine
+     for decoration and large text but fails AA for body copy either way. */
+  --zp-pink:        #ff2e7e;  /* decoration, icons, fills. 3.5:1 on white  */
+  --zp-pink-strong: #e5195e;  /* solid fill UNDER white text.  4.5:1       */
+  --zp-pink-ink:    #c9134f;  /* pink TEXT on a light surface. 5.6:1       */
+
+  --zp-pink-50:  #fff1f6;
+  --zp-pink-100: #ffe4ee;
+  --zp-pink-200: #ffc9de;
+  --zp-pink-300: #ff9cc2;
+  --zp-pink-400: #ff6ba4;
+
+  --zp-pink-soft:   #fff1f6;  /* icon tiles, recent-ride card */
+  --zp-pink-soft-2: #ffe0ea;
+  --zp-pink-ring:   rgba(255, 46, 126, 0.28);
+
+  /* ── Surfaces ────────────────────────────────────────────────── */
+  --zp-canvas:  #fafafa;
+  --zp-surface: #ffffff;
+  --zp-sunken:  #f4f4f6;
+
+  /* The sidebar and the dark promo cards are a brand surface: they stay
+     near-black in both themes rather than inverting. */
+  --zp-panel:       #0a0a0b;
+  --zp-panel-card:  #16161a;
+  --zp-panel-fg:    #fafafa;
+  --zp-panel-muted: #8b8b94;  /* 5.9:1 on --zp-panel */
+  --zp-panel-line:  #1f1f24;
+
+  /* ── Ink ─────────────────────────────────────────────────────── */
+  --zp-ink:       #101013;
+  --zp-ink-soft:  #52525b;
+  --zp-muted:     #6e6e78;  /* 5.0:1 on white */
+
+  /* ── Lines ───────────────────────────────────────────────────── */
+  --zp-line:        #ececef;
+  --zp-line-strong: #dedee3;
+
+  /* ── Status ──────────────────────────────────────────────────── */
+  --zp-success:      #15803d;
+  --zp-success-soft: #dcfce7;
+
+  /* ── Safe Directions: route risk + map overlay ──────────────────
+     The map reads these at runtime (MapLibre cannot use CSS vars), so
+     route colours follow the theme from this one place. */
+  --zp-risk-low:       #16a34a;
+  --zp-risk-med:       #d97706;
+  --zp-risk-high:      #dc2626;
+  --zp-risk-high-soft: #fee2e2;
+  --zp-risk-med-soft:  #fef3c7;
+  --zp-route-alt:      #8b8b94;
+  --zp-water:          #2563eb;
+  --zp-water-soft:     #dbeafe;
+  --zp-rural:          #a16207;
+  --zp-rural-soft:     #fef9c3;
+
+  /* ── Composites ──────────────────────────────────────────────── */
+  --zp-grad-pink: linear-gradient(135deg, #ff4d8d 0%, #ff2e7e 45%, #e5195e 100%);
+  --zp-hero-wash: radial-gradient(125% 145% at 78% 10%, #ffe4ee 0%, #fff1f6 38%, var(--zp-canvas) 74%);
+  --zp-sky:       linear-gradient(180deg, #ffe4ee 0%, #ff9cc2 58%, #ff5f9d 100%);
+
+  --zp-shadow-card: 0 1px 2px rgba(16, 16, 19, 0.04), 0 8px 24px -12px rgba(16, 16, 19, 0.10);
+  --zp-shadow-pill: 0 2px 6px rgba(16, 16, 19, 0.05), 0 12px 28px -14px rgba(16, 16, 19, 0.16);
+  --zp-shadow-pink: 0 8px 20px -8px rgba(255, 46, 126, 0.45);
+
+  /* ── Geometry ────────────────────────────────────────────────── */
+  --zp-sidebar-w: 290px;
+  --zp-rail-w:    84px;
+}
+
+/* `.dark` lands on <html>, which is also :root — identical specificity, so
+   only source order would decide the winner. `:root.dark` is (0,2,0) and wins
+   regardless of how Turbopack chunks the CSS. */
+:root.dark {
+  color-scheme: dark;
+
+  --zp-pink:        #ff4d8d;
+  --zp-pink-strong: #ff2e7e;
+  --zp-pink-ink:    #ff7dab;  /* pink text has to go lighter on a dark surface */
+
+  --zp-pink-50:  #2a1220;
+  --zp-pink-100: #3a1729;
+  --zp-pink-200: #55203a;
+  --zp-pink-300: #7d2b52;
+  --zp-pink-400: #b83a72;
+
+  --zp-pink-soft:   rgba(255, 77, 141, 0.13);
+  --zp-pink-soft-2: rgba(255, 77, 141, 0.22);
+  --zp-pink-ring:   rgba(255, 77, 141, 0.40);
+
+  --zp-canvas:  #0b0b0e;
+  --zp-surface: #151519;
+  --zp-sunken:  #1d1d22;
+
+  --zp-panel:       #08080a;  /* darker than the canvas so it still separates */
+  --zp-panel-card:  #141418;
+  --zp-panel-fg:    #fafafa;
+  --zp-panel-muted: #8b8b94;
+  --zp-panel-line:  #1c1c22;
+
+  --zp-ink:      #f4f4f5;
+  --zp-ink-soft: #a9a9b4;
+  --zp-muted:    #85858f;  /* 5.1:1 on --zp-surface */
+
+  --zp-line:        #26262c;
+  --zp-line-strong: #33333b;
+
+  --zp-success:      #4ade80;
+  --zp-success-soft: rgba(74, 222, 128, 0.15);
+
+  --zp-risk-low:       #4ade80;
+  --zp-risk-med:       #fbbf24;
+  --zp-risk-high:      #f87171;
+  --zp-risk-high-soft: rgba(248, 113, 113, 0.15);
+  --zp-risk-med-soft:  rgba(251, 191, 36, 0.15);
+  --zp-route-alt:      #6e6e78;
+  --zp-water:          #60a5fa;
+  --zp-water-soft:     rgba(96, 165, 250, 0.15);
+  --zp-rural:          #facc15;
+  --zp-rural-soft:     rgba(250, 204, 21, 0.13);
+
+  --zp-grad-pink: linear-gradient(135deg, #ff6ba1 0%, #ff3d82 50%, #e5195e 100%);
+  --zp-hero-wash: radial-gradient(125% 145% at 78% 10%, rgba(255, 77, 141, 0.16) 0%, rgba(255, 77, 141, 0.06) 40%, var(--zp-canvas) 74%);
+  --zp-sky:       linear-gradient(180deg, #3a1b30 0%, #7d2b52 62%, #b83a72 100%);
+
+  --zp-shadow-card: 0 1px 2px rgba(0, 0, 0, 0.5), 0 8px 24px -12px rgba(0, 0, 0, 0.7);
+  --zp-shadow-pill: 0 2px 6px rgba(0, 0, 0, 0.5), 0 12px 28px -14px rgba(0, 0, 0, 0.75);
+  --zp-shadow-pink: 0 8px 20px -8px rgba(255, 77, 141, 0.35);
+}
+
+/* ── Expose tokens to Tailwind ─────────────────────────────────────
+   `inline` compiles each utility down to var(--zp-*) directly instead of
+   emitting an extra indirection into :root, so the :root.dark block above
+   flips every generated utility. The --color-* namespace also gives us
+   fill-* and stroke-*, which is what makes the inline SVG art themeable. */
+@theme inline {
+  --color-canvas:  var(--zp-canvas);
+  --color-surface: var(--zp-surface);
+  --color-sunken:  var(--zp-sunken);
+
+  --color-panel:       var(--zp-panel);
+  --color-panel-card:  var(--zp-panel-card);
+  --color-panel-fg:    var(--zp-panel-fg);
+  --color-panel-muted: var(--zp-panel-muted);
+  --color-panel-line:  var(--zp-panel-line);
+
+  --color-ink:      var(--zp-ink);
+  --color-ink-soft: var(--zp-ink-soft);
+  --color-muted:    var(--zp-muted);
+
+  --color-line:        var(--zp-line);
+  --color-line-strong: var(--zp-line-strong);
+
+  --color-pink:        var(--zp-pink);
+  --color-pink-strong: var(--zp-pink-strong);
+  --color-pink-ink:    var(--zp-pink-ink);
+  --color-pink-soft:   var(--zp-pink-soft);
+  --color-pink-soft-2: var(--zp-pink-soft-2);
+  --color-pink-50:     var(--zp-pink-50);
+  --color-pink-100:    var(--zp-pink-100);
+  --color-pink-200:    var(--zp-pink-200);
+  --color-pink-300:    var(--zp-pink-300);
+  --color-pink-400:    var(--zp-pink-400);
+
+  --color-success:      var(--zp-success);
+  --color-success-soft: var(--zp-success-soft);
+
+  --color-risk-low:       var(--zp-risk-low);
+  --color-risk-med:       var(--zp-risk-med);
+  --color-risk-high:      var(--zp-risk-high);
+  --color-risk-high-soft: var(--zp-risk-high-soft);
+  --color-risk-med-soft:  var(--zp-risk-med-soft);
+  --color-route-alt:      var(--zp-route-alt);
+  --color-water:          var(--zp-water);
+  --color-water-soft:     var(--zp-water-soft);
+  --color-rural:          var(--zp-rural);
+  --color-rural-soft:     var(--zp-rural-soft);
+
+  --radius-tile: 0.875rem;
+  --radius-card: 1rem;
+  --radius-panel: 1.375rem;
+
+  --shadow-card: var(--zp-shadow-card);
+  --shadow-pill: var(--zp-shadow-pill);
+  --shadow-pink: var(--zp-shadow-pink);
+
+  --font-script: var(--font-caveat), "Segoe Script", "Bradley Hand", cursive;
+}

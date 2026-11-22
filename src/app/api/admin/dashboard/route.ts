@@ -1,8 +1,8 @@
 import { db } from "@/lib/db";
-import { users, trips, fuelPrices, adminLogs } from "@/lib/schema";
+import { users, trips, adminLogs } from "@/lib/schema";
 import { requireAdmin } from "@/lib/admin-guard";
 import { ensureDatabaseSetup } from "@/lib/db-init";
-import { count, eq, gte, lte, and, sql, desc, isNull } from "drizzle-orm";
+import { count, eq, gte, lte, and, desc, isNull } from "drizzle-orm";
 
 export async function GET(request: Request) {
   try {
@@ -13,8 +13,8 @@ export async function GET(request: Request) {
     const startParam = url.searchParams.get("startDate");
     const endParam = url.searchParams.get("endDate");
 
-    let startDate = startParam ? new Date(startParam) : undefined;
-    let endDate = endParam ? new Date(endParam) : undefined;
+    const startDate = startParam ? new Date(startParam) : undefined;
+    const endDate = endParam ? new Date(endParam) : undefined;
 
     // Adjust end date to the end of the day
     if (endDate) {
@@ -25,7 +25,8 @@ export async function GET(request: Request) {
     const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-    const dateFilter = startDate && endDate 
+    const customerFilter = and(isNull(users.deletedAt), eq(users.role, "user"));
+    const dateFilter = startDate && endDate
       ? and(gte(users.createdAt, startDate), lte(users.createdAt, endDate))
       : undefined;
 
@@ -37,7 +38,7 @@ export async function GET(request: Request) {
     const [totalUsersRow] = await db
       .select({ count: count() })
       .from(users)
-      .where(and(isNull(users.deletedAt), dateFilter));
+      .where(customerFilter);
 
     // New users this week (or period if specified)
     const [newUsersRow] = await db
@@ -45,8 +46,8 @@ export async function GET(request: Request) {
       .from(users)
       .where(
         startDate && endDate 
-          ? and(dateFilter, isNull(users.deletedAt))
-          : sql`${users.createdAt} >= ${weekAgo} AND ${users.deletedAt} IS NULL`
+          ? and(customerFilter, dateFilter)
+          : and(customerFilter, gte(users.createdAt, weekAgo))
       );
 
     // Active users (isActive = true)
@@ -55,17 +56,22 @@ export async function GET(request: Request) {
       .from(users)
       .where(
         startDate && endDate
-          ? and(sql`${users.isActive} = true AND ${users.deletedAt} IS NULL`, dateFilter)
-          : sql`${users.isActive} = true AND ${users.deletedAt} IS NULL`
+          ? and(customerFilter, eq(users.isActive, true), dateFilter)
+          : and(customerFilter, eq(users.isActive, true))
       );
 
     // Trips today (or in period)
-    const [tripsTodayRow] = await db
+    const [tripsInPeriodRow] = await db
       .select({ count: count() })
       .from(trips)
       .where(
         startDate && endDate ? tripsDateFilter : gte(trips.createdAt, today)
       );
+
+    const [totalTripsRow] = await db
+      .select({ count: count() })
+      .from(trips)
+      .where(tripsDateFilter);
 
     // Total trips by type
     const tripsByType = await db
@@ -83,13 +89,6 @@ export async function GET(request: Request) {
       .orderBy(desc(count()))
       .limit(5);
 
-    // Fuel prices last updated
-    const [lastFuelUpdate] = await db
-      .select({ updatedAt: fuelPrices.updatedAt })
-      .from(fuelPrices)
-      .orderBy(desc(fuelPrices.updatedAt))
-      .limit(1);
-
     // Recent Activity (Admin Logs)
     const recentActivity = await db
       .select({
@@ -106,15 +105,50 @@ export async function GET(request: Request) {
       .orderBy(desc(adminLogs.createdAt))
       .limit(10);
 
+    // Recent customer rides, including the customer who made each trip.
+    const recentTrips = await db
+      .select({
+        id: trips.id,
+        userName: users.name,
+        userEmail: users.email,
+        type: trips.type,
+        origin: trips.origin,
+        destination: trips.destination,
+        createdAt: trips.createdAt,
+      })
+      .from(trips)
+      .innerJoin(users, eq(trips.userId, users.id))
+      .where(
+        tripsDateFilter
+          ? and(tripsDateFilter, customerFilter)
+          : customerFilter
+      )
+      .orderBy(desc(trips.createdAt))
+      .limit(10);
+
+    const recentSignups = await db
+      .select({
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        createdAt: users.createdAt,
+      })
+      .from(users)
+      .where(customerFilter)
+      .orderBy(desc(users.createdAt))
+      .limit(10);
+
     return Response.json({
       totalUsers: totalUsersRow.count,
       newUsersThisWeek: newUsersRow.count,
       activeUsers: activeUsersRow.count,
-      tripsToday: tripsTodayRow.count,
+      tripsInPeriod: tripsInPeriodRow.count,
+      totalTrips: totalTripsRow.count,
       tripsByType,
       topDestinations,
-      fuelPricesLastUpdated: lastFuelUpdate?.updatedAt ?? null,
       recentActivity,
+      recentTrips,
+      recentSignups,
     });
   } catch (err) {
     if (err instanceof Response) return err;

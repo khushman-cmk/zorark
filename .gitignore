@@ -39,3 +39,24 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+/test-results/
+/playwright-report/
+/playwright/.cache/
+/e2e/.artifacts/
+/e2e/.auth/
+
+# Persistent browser profiles used by the provider connect helper
+/.playwright-profiles/
+
+# Safe routing: downloaded/generated map data and the routing engine
+/data/osm/
+/data/safety/
+/public/safety/
+/public/maplibre/
+/graphhopper/*.jar
+/graphhopper/graph-cache/
+/graphhopper/logs/
+/graphhopper/server.log
+/graphhopper/models/safety.json
+/scripts/safety/.venv/
+__pycache__/

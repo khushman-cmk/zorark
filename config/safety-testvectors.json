@@ -1,0 +1,68 @@
+{
+  "$comment": "Grid indexing must agree between scripts/safety (Python) and src/lib/safety/grid.ts. Regenerate only if the grid definition in safety-model.json changes.",
+  "nx": 802,
+  "ny": 635,
+  "mPerDegLon": 97704.49481791962,
+  "vectors": [
+    {
+      "name": "Gejha",
+      "lng": 77.384,
+      "lat": 28.5237,
+      "cell": 155327
+    },
+    {
+      "name": "Connaught Place",
+      "lng": 77.2167,
+      "lat": 28.6315,
+      "cell": 251403
+    },
+    {
+      "name": "Gurgaon Cyber City",
+      "lng": 77.0918,
+      "lat": 28.4973,
+      "cell": 130981
+    },
+    {
+      "name": "Greater Noida",
+      "lng": 77.504,
+      "lat": 28.4744,
+      "cell": 111334
+    },
+    {
+      "name": "SW corner",
+      "lng": 76.83,
+      "lat": 28.35,
+      "cell": 0
+    },
+    {
+      "name": "just inside NE",
+      "lng": 77.6499,
+      "lat": 28.9199,
+      "cell": 509269
+    },
+    {
+      "name": "west of grid",
+      "lng": 76.8,
+      "lat": 28.6,
+      "cell": -1
+    },
+    {
+      "name": "north of grid",
+      "lng": 77.2,
+      "lat": 28.95,
+      "cell": -1
+    },
+    {
+      "name": "cell edge x",
+      "lng": 76.83307048309864,
+      "lat": 28.4,
+      "cell": 44112
+    },
+    {
+      "name": "Sector 108",
+      "lng": 77.3735,
+      "lat": 28.5272,
+      "cell": 158525
+    }
+  ]
+}

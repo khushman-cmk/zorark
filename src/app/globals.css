@@ -1,26 +1,18 @@
-@import "tailwindcss";
+/* The single Tailwind entry point.
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+   @theme, @custom-variant and @utility only take effect inside the CSS import
+   graph rooted at the file holding `@import "tailwindcss"`, so the Zippi design
+   system is pulled in here with CSS @import rather than from a .tsx file.
+   Dark mode is the `.dark` class from next-themes; there is deliberately no
+   prefers-color-scheme block, because next-themes already translates the OS
+   preference into that class and a media query would override an explicit
+   light choice. */
+
+@import "tailwindcss";
+@import "../styles/zippi.css";
+@import "../styles/zippi-base.css";
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-geist-sans), "Segoe UI", sans-serif;
 }
